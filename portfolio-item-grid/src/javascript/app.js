@@ -7,6 +7,7 @@ Ext.define("portfolio-item-grid", {
     config: {
         defaultSettings: {
             showScopeSelector: true,
+            selectorType: null,
             type: 'hierarchicalrequirement',
             columnNames: ['FormattedID','Name'],
             //order: this.order,
@@ -57,7 +58,8 @@ Ext.define("portfolio-item-grid", {
             this.getHeader().add({
                 xtype: 'portfolioitemselector',
                 context: this.getContext(),
-                portfolioItemTypes: this.portfolioItemTypes,
+                type: this.getSetting('selectorType'),
+                stateId: this.getContext().getScopedStateId('app-selector'),
                 width: '75%',
                 listeners: {
                     change: this.updatePortfolioItem,

@@ -5,15 +5,18 @@ Ext.define('portfolio-item-selector', {
     layout : 'hbox',
     width : '100%',
     mixins : [
-        'Rally.Messageable'
+        'Rally.Messageable',
+        'Ext.state.Stateful'
     ],
+    stateful: true,
+    stateEvents: ['change'],
 
+    type: null,
     buttonText: 'Select...',
 
     constructor : function(config)
     {
-        Ext.apply(this, config);
-        this.stateId = Rally.environment.getContext().getScopedStateId('portfolioitemselector');
+        this.type = config.type;
         this.callParent(arguments);
     },
     initComponent : function()
@@ -27,34 +30,95 @@ Ext.define('portfolio-item-selector', {
         this.subscribe(this, 'requestPortfolioItem', this._requestPorfolioItem, this);
 
     },
+    getState: function(){
+        if (this.portfolioItem){
+            return {portfolioItemRef: this.portfolioItem.get('_ref')};
+        }
+        return null;
+    },
+    applyState: function(state) {
+        if (!Ext.isEmpty(state) && !Ext.Object.isEmpty(state)){
+            var ref = Ext.create('Rally.util.Ref',state.portfolioItemRef),
+                type = ref.getType();
+
+            //don't apply the state if the type doesn't match.
+            if (this.type && this.type.toLowerCase() !== type.toLowerCase()){
+                this._updatePortfolioItem(null);
+                return;
+            }
+
+            Rally.data.ModelFactory.getModel({
+                type: type,
+                scope: this,
+                success: function(model) {
+                    model.load(ref.getOid(),{
+                        scope: this,
+                        callback: function(result, operation){
+                            if (result && operation.wasSuccessful()){
+                                this._updatePortfolioItem(result);
+                            } else {
+                                this._updatePortfolioItem(null);
+                                Rally.ui.notify.Notifier.showError({message: 'Could not load state for item [' + state + ']: ' + operation.error && operation.error.errors.join(',')});
+                            }
+
+                        }
+                    });
+                },
+                failure: function(){
+                    this._updatePortfolioItem(null);
+                    Rally.ui.notify.Notifier.showError({message: 'Could not load state for item [' + state + ']'});
+                }
+            });
+        } else {
+            this._updatePortfolioItem(null);
+        }
+    },
+    _updatePortfolioItem: function(portfolioItem){
+        this.portfolioItem = portfolioItem;
+        var ct = this.down('#portfolio-item-description');
+        if (ct){
+            if (this.portfolioItem){
+                ct.update(this.portfolioItem.getData());
+            } else {
+                ct.update({});
+            }
+        }
+        this.fireEvent('change', portfolioItem);
+        this.publish('portfolioItemSelected', portfolioItem);
+        if (this.stateful && this.stateId){
+            this.saveState();
+        }
+    },
     _addSelector : function()
     {
-        this.add({
-            xtype: 'rallybutton',
-            text: this.buttonText,
-            cls: 'rly-small secondary',
-            listeners: {
-                scope: this,
-                click: this._showPicker
-            }
-        });
-        var ct = this.add({
-            xtype:'container',
-            itemId:'portfolio-item-description',
-            tpl:'<tpl if="FormattedID">{FormattedID}:  {Name}<tpl else>Please select a Portfolio Item</tpl>'
-        });
-
-        if (this.portfolioItem){
-            ct.update(this.portfolioItem.getData());
+        this.removeAll();
+        if (!this.type){
+            this.add({
+                xtype: 'container',
+                html: '<div class="message">Please configure a selector type in the app settings.</div>',
+                padding: 10
+            });
         } else {
-            ct.update({});
+            this.add({
+                xtype: 'rallybutton',
+                text: this.buttonText,
+                cls: 'rly-small primary',
+                margin: 10,
+                listeners: {
+                    scope: this,
+                    click: this._showPicker
+                }
+            });
+            var ct = this.add({
+                xtype:'container',
+                itemId:'portfolio-item-description',
+                margin: 10,
+                tpl:'<tpl if="FormattedID"><div class="portfolio-item">{FormattedID}:  {Name}</div><tpl else><div class="message">Please select a Portfolio Item</div></tpl>'
+            });
         }
-
-
-
     },
     _showPicker: function(){
-        var types = _.pluck(this.portfolioItemTypes, 'typePath');
+        var types = [this.type];
         Ext.create('Rally.ui.dialog.ArtifactChooserDialog', {
             artifactTypes: types,
             autoShow: true,
@@ -62,10 +126,7 @@ Ext.define('portfolio-item-selector', {
             title: 'Select Portfolio Item',
             listeners: {
                 artifactchosen: function(dialog, selectedRecord){
-                    this.portfolioItem = selectedRecord;
-                    this.down('#portfolio-item-description').update(selectedRecord.getData());
-                    this.fireEvent('change', selectedRecord);
-                    this.publish('portfolioItemSelected', selectedRecord);
+                    this._updatePortfolioItem(selectedRecord);
                 },
                 scope: this
             }
