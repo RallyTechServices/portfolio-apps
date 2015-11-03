@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portfolio Item Selector</title>
+    <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
+    <!--  Build Date: Tue Nov 03 2015 16:15:55 GMT-0700 (MST) -->
+    
+    <script type="text/javascript">
+        var APP_BUILD_DATE = "Tue Nov 03 2015 16:15:55 GMT-0700 (MST)";
+        var CHECKSUM = [%= checksum %];
+    </script>
+    
+    <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function() {
+            
+            
+               Rally.launchApp('portfolio-item-selector-app', {
+                   name: 'Portfolio Item Selector'
+               });
+        });
+    </script>
+    
+    <style type="text/css">
+
+.message {
+    font-family: ProximaNova, Helvetica, Arial;
+    font-size: 14px;
+    color: #999999;
+}
+
+.portfolio-item {
+    font-family: ProximaNova, Helvetica, Arial;
+    font-size: 14px;
+    color: #666666;
+
+}
+.app {
+}
+.tsinfolink {
+    position:absolute;
+    right:0px;
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    text-align: center;
+    color: white;
+    background: #C0C0C0;
+    border-style: solid;
+    border-width: 1px;
+    margin-top: 25px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+    </style>
+
+</head>
+<body></body>
+</html>
