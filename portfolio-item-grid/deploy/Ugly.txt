@@ -3,10 +3,10 @@
 <head>
     <title>Portfolio Item Picker</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Nov 03 2015 16:20:42 GMT-0700 (MST) -->
+    <!--  Build Date: Mon Nov 09 2015 16:38:00 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Nov 03 2015 16:20:42 GMT-0700 (MST)";
+        var APP_BUILD_DATE = "Mon Nov 09 2015 16:38:00 GMT-0800 (PST)";
         var CHECKSUM = [%= checksum %];
     </script>
     

@@ -152,14 +152,58 @@ Ext.define("portfolio-item-grid", {
             projectOid: this.getContext().getProject().ObjectID,
             user: this.getContext().getUser()._ref
         });
+        var filter = [];
         if (query) {
             try {
-                return [ Rally.data.wsapi.Filter.fromQueryString(query) ];
+                filter =  [ Rally.data.wsapi.Filter.fromQueryString(query) ];
             } catch(e) {
                 Rally.ui.notify.Notifier.showError({ message: e.message });
+                return filter;
             }
         }
-        return [];
+
+        var invalidQueryFilters = this._findInvalidSubFilters(filter, this.models);
+        if (invalidQueryFilters.length) {
+            filter = [];
+            var msg = _.map(invalidQueryFilters, function (filter) {
+                return 'Could not find the attribute "'+ filter.property.split('.')[0] +'" on type "'+ this.models[0].displayName +'" in the query segment "'+ filter.toString() + '"'
+            }, this);
+
+                Rally.ui.notify.Notifier.showError({message: "Query is invalid:  " + msg });
+        }
+        return filter;
+    },
+    _propertyBelongsToSomeType: function(property, models){
+        return _.some(models, function(model) {
+            var field = model.getField(property) || model.getField(Ext.String.capitalize(property || ''));
+            return field && !field.virtual;
+        });
+    },
+    _findInvalidSubFilters: function(filters, models){
+        return _(filters).map(this._getSubFilters, this).flatten().filter(function (subFilter) {
+            return !this._propertyBelongsToSomeType(subFilter.property.split('.')[0], models);
+        }, this).map(function (filter) {
+            return Ext.create('Rally.data.wsapi.Filter', filter);
+        }, this).value();
+    },
+    _getSubFilters: function(filter){
+        var subFilters = [];
+        var filterTraversal = function(filter) {
+            if (_.isString(filter.property) && !_.contains(subFilters, filter.property) && filter.property !== 'TypeDefOid') {
+                subFilters.push(filter);
+            } else {
+                if (_.isObject(filter.property)) {
+                    filterTraversal(filter.property);
+                }
+                if (_.isObject(filter.value)) {
+                    filterTraversal(filter.value);
+                }
+            }
+        };
+
+        filterTraversal(filter);
+
+        return subFilters;
     },
     _getPortfolioItemFilter: function(){
         this.logger.log('_getPortfolioItemFilter', this.portfolioItem)
@@ -208,7 +252,7 @@ Ext.define("portfolio-item-grid", {
 
         var gridboard = Ext.create('Rally.ui.gridboard.GridBoard', {
             itemId: 'gridboard',
-           // stateId: this.getContext().getScopedStateId('gb'),
+           // stateId: this.getContext().getScopedStateId('portfolio-grid'),
             toggleState: 'grid',
             modelNames: modelNames,
             context: this.getContext(),
@@ -219,19 +263,19 @@ Ext.define("portfolio-item-grid", {
                     ptype: 'rallygridboardfieldpicker',
                     headerPosition: 'left',
                     modelNames: modelNames,
-                   // stateful: true,
-                   // stateId: this.getContext().getScopedStateId('gb-columns')
+                    stateful: true,
+                    stateId: this.getContext().getScopedStateId('portfolio-grid-columns')
                 },{
                     ptype: 'rallygridboardcustomfiltercontrol',
                     filterControlConfig: {
                         modelNames: modelNames,
-                       // stateful: true,
-                       // stateId: this.getContext().getScopedStateId('gb-filter')
+                        stateful: true,
+                        stateId: this.getContext().getScopedStateId('portfolio-grid-filter')
                     },
                     showOwnerFilter: true,
                     ownerFilterControlConfig: {
-                       // stateful: true,
-                       // stateId: this.getContext().getScopedStateId('gb-owner-filter')
+                       stateful: true,
+                       stateId: this.getContext().getScopedStateId('portfolio-owner-filter')
                     }
                 }
 
