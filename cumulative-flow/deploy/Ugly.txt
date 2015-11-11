@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Portfolio Item Picker</title>
+    <title>Portfolio Item Cumulative Flow</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Nov 09 2015 16:38:00 GMT-0800 (PST) -->
+    <!--  Build Date: Tue Nov 10 2015 16:43:14 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Nov 09 2015 16:38:00 GMT-0800 (PST)";
+        var APP_BUILD_DATE = "Tue Nov 10 2015 16:43:14 GMT-0800 (PST)";
         var CHECKSUM = [%= checksum %];
     </script>
     
@@ -16,8 +16,8 @@
         Rally.onReady(function() {
             
             
-               Rally.launchApp('portfolio-item-grid', {
-                   name: 'Portfolio Item Picker'
+               Rally.launchApp('CumulativeFlowChartApp', {
+                   name: 'Portfolio Item Cumulative Flow'
                });
         });
     </script>
@@ -40,6 +40,24 @@
     margin-top: 25px;
     margin-right: 5px;
     cursor: pointer;
+}
+
+.settingsLabel {
+    font-family: NotoSansBold, Helvetica, Arial;
+    font-weight: normal;
+    min-height: 20px;
+    text-transform: uppercase;
+}
+
+.settingsSubLabel {
+    font-family: NotoSans, Helvetica, Arial;
+    font-weight: normal;
+    font-size: 10px;
+    font-style: italic;
+    float: right;
+    align: right;
+    text-align: right;
+    color: #666666;
 }
     </style>
 
