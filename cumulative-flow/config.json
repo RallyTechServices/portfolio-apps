@@ -1,0 +1,18 @@
+{
+    "name": "Portfolio Item Cumulative Flow",
+    "className": "CumulativeFlowChartApp",
+    "server": "https://rally1.rallydev.com",
+    "sdk": "2.0",
+    "apiKey": "_PUT_APIKEY_HERE_",
+    "javascript": [
+        "__ts-info-link.js",
+        "__ts-logger.js",
+        "support/DateMixin.js",
+        "support/colors.js",
+        "support/CumulativeFlowCalculator.js",
+        "support/ChartSettings.js",
+        "../../../common/src/javascript/toolbox.js",
+        "../../../common/src/javascript/portfolio-item-selector.js",
+        "app.js"
+    ]
+}

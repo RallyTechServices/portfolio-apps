@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portfolio Item Cumulative Flow</title>
+    <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
+    <!--  Build Date: Tue Nov 10 2015 16:43:14 GMT-0800 (PST) -->
+    
+    <script type="text/javascript">
+        var APP_BUILD_DATE = "Tue Nov 10 2015 16:43:14 GMT-0800 (PST)";
+        var CHECKSUM = [%= checksum %];
+    </script>
+    
+    <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function() {
+            
+            
+               Rally.launchApp('CumulativeFlowChartApp', {
+                   name: 'Portfolio Item Cumulative Flow'
+               });
+        });
+    </script>
+    
+    <style type="text/css">
+
+.app {
+}
+.tsinfolink {
+    position:absolute;
+    right:0px;
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    text-align: center;
+    color: white;
+    background: #C0C0C0;
+    border-style: solid;
+    border-width: 1px;
+    margin-top: 25px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.settingsLabel {
+    font-family: NotoSansBold, Helvetica, Arial;
+    font-weight: normal;
+    min-height: 20px;
+    text-transform: uppercase;
+}
+
+.settingsSubLabel {
+    font-family: NotoSans, Helvetica, Arial;
+    font-weight: normal;
+    font-size: 10px;
+    font-style: italic;
+    float: right;
+    align: right;
+    text-align: right;
+    color: #666666;
+}
+    </style>
+
+</head>
+<body></body>
+</html>
