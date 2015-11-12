@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Picker</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Nov 09 2015 16:38:00 GMT-0800 (PST) -->
+    <!--  Build Date: Thu Nov 12 2015 08:59:09 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Nov 09 2015 16:38:00 GMT-0800 (PST)";
-        var CHECKSUM = 20373541893;
+        var APP_BUILD_DATE = "Thu Nov 12 2015 08:59:09 GMT-0800 (PST)";
+        var CHECKSUM = 20463950983;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -435,24 +435,28 @@ Ext.define("portfolio-item-grid", {
             modelNames: modelNames,
             context: this.getContext(),
             //** addNewPluginConfig: this.getAddNewConfig(),
-            plugins:  [
-                'rallygridboardaddnew',
-                {
+            plugins:  [{
+                ptype: 'rallygridboardaddnew',
+                margin: 10
+                },{
                     ptype: 'rallygridboardfieldpicker',
                     headerPosition: 'left',
                     modelNames: modelNames,
+                    margin: 10,
                     stateful: true,
                     stateId: this.getContext().getScopedStateId('portfolio-grid-columns')
                 },{
                     ptype: 'rallygridboardcustomfiltercontrol',
                     filterControlConfig: {
                         modelNames: modelNames,
+                        margin: 10,
                         stateful: true,
                         stateId: this.getContext().getScopedStateId('portfolio-grid-filter')
                     },
                     showOwnerFilter: true,
                     ownerFilterControlConfig: {
                        stateful: true,
+                       margin: 10,
                        stateId: this.getContext().getScopedStateId('portfolio-owner-filter')
                     }
                 }
