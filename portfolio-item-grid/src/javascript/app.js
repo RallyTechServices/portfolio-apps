@@ -257,24 +257,27 @@ Ext.define("portfolio-item-grid", {
             modelNames: modelNames,
             context: this.getContext(),
             //** addNewPluginConfig: this.getAddNewConfig(),
-            plugins:  [
-                'rallygridboardaddnew',
-                {
+            plugins:  [{
+                ptype: 'rallygridboardaddnew'
+                },{
                     ptype: 'rallygridboardfieldpicker',
                     headerPosition: 'left',
                     modelNames: modelNames,
+                    margin: '0 10 0 0',
                     stateful: true,
                     stateId: this.getContext().getScopedStateId('portfolio-grid-columns')
                 },{
                     ptype: 'rallygridboardcustomfiltercontrol',
                     filterControlConfig: {
                         modelNames: modelNames,
+                        margin:  '0 10 0 0',
                         stateful: true,
                         stateId: this.getContext().getScopedStateId('portfolio-grid-filter')
                     },
                     showOwnerFilter: true,
                     ownerFilterControlConfig: {
                        stateful: true,
+                       margin:  '0 10 0 0',
                        stateId: this.getContext().getScopedStateId('portfolio-owner-filter')
                     }
                 }
