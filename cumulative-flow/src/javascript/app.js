@@ -6,6 +6,7 @@
         logger: new Rally.technicalservices.Logger(),
         cls: "portfolio-cfd-app",
 
+        type: this.getSetting('selectorType'),
         chartComponentConfig: {
             xtype: "rallychart",
 
@@ -39,7 +40,7 @@
                 xAxis: {
                     categories: [],
                     tickmarkPlacement: "on",
-                   // tickInterval: 5,
+                    // tickInterval: 5,
                     title: {
                         text: "Days",
                         margin: 10
@@ -107,7 +108,7 @@
             );
 
 
-          //  this._addHelpComponent();
+            //  this._addHelpComponent();
             this._setDefaultConfigValues();
             this._setupUpdateBeforeRender();
 
@@ -133,7 +134,6 @@
                 this.headerContainer.add({
                     xtype: 'portfolioitemselector',
                     context: this.getContext(),
-                    type: this.getSetting('selectorType'),
                     stateId: this.getContext().getScopedStateId('app-selector'),
                     width: '75%',
                     listeners: {

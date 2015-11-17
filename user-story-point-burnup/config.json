@@ -1,0 +1,18 @@
+{
+    "name": "Portfolio Item Point Burnup",
+    "className": "user-story-point-burnup",
+    "server": "https://rally1.rallydev.com",
+    "sdk": "2.0",
+    "apiKey": "_PUT_APIKEY_HERE_",
+    "javascript": [
+        "__ts-logger.js",
+        "__ts-info-link.js",
+        "../../../common/src/javascript/toolbox.js",
+        "../../../common/src/javascript/portfolio-item-selector.js",
+        "DateMixin.js",
+        "Colors.js",
+        "Settings.js",
+        "BurnCalculator.js",
+        "app.js"
+    ]
+}
