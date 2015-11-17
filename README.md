@@ -7,3 +7,6 @@ Series of apps built to respond to a single portfolio item picker on a dashboard
 
 ####Portfolio Item Cumulative Flow [(more...)](/cumulative-flow/README.md)
 ![ScreenShot](/images/cumulative-flow.png)
+
+####Portfolio Item User Story Burnup [(more...)](/user-story-point-burnup/README.md)
+![ScreenShot](/images/story-burnup.png)
