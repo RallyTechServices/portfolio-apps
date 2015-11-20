@@ -10,3 +10,6 @@ Series of apps built to respond to a single portfolio item picker on a dashboard
 
 ####Portfolio Item User Story Burnup [(more...)](/user-story-point-burnup/README.md)
 ![ScreenShot](/images/story-burnup.png)
+
+####Portfolio Item Kanban Board [(more...)](/portfolio-kanban/README.md)
+![ScreenShot](/images/portfolio-item-kanban.png)
