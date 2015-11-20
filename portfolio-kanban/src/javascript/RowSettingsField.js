@@ -21,13 +21,6 @@
     Ext.define('Rally.apps.common.RowSettingsField', {
         alias: 'widget.rowsettingsfield',
         extend: 'Ext.form.FieldContainer',
-        //requires: [
-        //    'Rally.ui.CheckboxField',
-        //    'Rally.ui.combobox.ComboBox',
-        //    'Rally.ui.plugin.FieldValidationUi',
-        //    'Rally.data.ModelFactory',
-        //    'Rally.data.wsapi.ModelBuilder'
-        //],
 
         mixins: {
             field: 'Ext.form.field.Field'
@@ -65,7 +58,7 @@
              * @cfg {String[]}
              * Array of models for which to list fields for
              */
-            modelNames: ['userstory', 'defect'],
+            modelNames: [], //['userstory', 'defect'],
 
             /**
              * @cfg {String[]}
@@ -117,8 +110,8 @@
 
             this._loadModels();
         },
-
         _loadModels: function() {
+
             Rally.data.ModelFactory.getModels({
                 types: this.getModelNames(),
                 context: this.context,

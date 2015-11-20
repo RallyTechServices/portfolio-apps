@@ -188,5 +188,30 @@ Ext.define('Rally.technicalservices.WsapiToolbox', {
             }
         });
         return deferred.promise;
+    },
+    fetchTypeDefinition: function(typePath){
+        var deferred = Ext.create('Deft.Deferred');
+
+        var store = Ext.create('Rally.data.wsapi.Store',{
+            model: 'TypeDefinition',
+            fetch: ['TypePath','Name'],
+            filters: [{
+                property: 'TypePath',
+                value: typePath
+            }]
+        }).load({
+            callback: function(records, operation, success){
+                if (success && records && records.length > 0){
+                    deferred.resolve(records[0]);
+                } else {
+                    var message = "No records returned when loading Type Definition for " + typePath;
+                    if (!success){
+                        message = "Error loading Type Definition for " + typePath + ':  ' + operation.error.errors.join(',');
+                    }
+                    deferred.reject(message); //(Ext.String.format("Error getting TypeDefinition for {1}: {0}", operation.error.errors.join(','), typeDef));
+                }
+            }
+        });
+        return deferred;
     }
 });

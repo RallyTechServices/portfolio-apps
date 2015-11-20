@@ -7,7 +7,7 @@
      */
     Ext.define('portfolio-kanban', {
         extend: 'Rally.app.App',
-
+        logger: new Rally.technicalservices.Logger(),
         appName: 'Portfolio Kanban',
         autoScroll: false,
         cls: 'portfolio-kanban',
@@ -17,7 +17,12 @@
 
         config: {
             defaultSettings: {
-                fields: 'Discussion,PercentDoneByStoryCount,UserStories,Milestones'
+                fields: 'Discussion,PercentDoneByStoryCount,UserStories,Milestones',
+                showScopeSelector: true,
+
+            },
+            selectorConfig: {
+                renderInGridHeader: false
             }
         },
 
@@ -61,42 +66,37 @@
                 'gridboardadded'
             );
         },
-        constructor: function(config) {
-            config.settingsScope = config.isFullPageApp ? 'project' : 'app';
-            config.piTypePickerConfig = { renderInGridHeader: !config.isFullPageApp };
-            var defaultConfig = {
-                piTypePickerConfig: {
-                    renderInGridHeader: false
-                }
-            };
-            this.callParent([Ext.Object.merge(defaultConfig, config)]);
-        },
-        initComponent: function(){
-            this.callParent(arguments);
-            this.addCls('portfolio-items-grid-board-app');
-        },
         launch: function () {
+            this.addCls('portfolio-items-grid-board-app');
             if (Rally.environment.getContext().getSubscription().isModuleEnabled('Rally Portfolio Manager')) {
-                console.log('launch');
                 this._loadGridBoardPreference();
-                this.loadModelNames().then({
-                    success: function (modelNames) {
-
-                        this.modelNames = modelNames;
-                        if(!this.rendered) {
-                            this.on('afterrender', this.loadGridBoard, this, {single: true});
-                        } else {
-                            this.loadGridBoard();
-                        }
+                Rally.technicalservices.WsapiToolbox.fetchPortfolioItemTypes().then({
+                    success: function(types){
+                        this.portfolioItemTypes = types;
+                        this._setupSelector();
                     },
                     scope: this
                 });
+
+
+
+                //this.loadModelNames().then({
+                //    success: function (modelNames) {
+                //
+                //        this.modelNames = modelNames;
+                //        if(!this.rendered) {
+                //            this.on('afterrender', this.loadGridBoard, this, {single: true});
+                //        } else {
+                //            this.loadGridBoard();
+                //        }
+                //    },
+                //    scope: this
+                //});
             } else {
                 this.add({
                     xtype: 'container',
                     html: '<div class="rpm-turned-off" style="padding: 50px; text-align: center;">You do not have RPM enabled for your subscription</div>'
                 });
-
                 this.publishComponentReady();
             }
         },
@@ -107,16 +107,112 @@
                 this.toggleState = gridboardPrefs.toggleState || this.toggleState;
             }
         },
-        loadModelNames: function () {
-            return this._createPITypePicker().then({
-                success: function (selectedType) {
-                    this.currentType = selectedType;
-                    return [selectedType.get('TypePath')];
+        _setupSelector: function(){
+            this.logger.log('_setupSelector');
+            if (this.gridboard){
+                this.gridboard.destroy();
+            }
+
+            this.removeAll();
+
+            if ( this.getSetting('showScopeSelector') || this.getSetting('showScopeSelector') == "true" ) {
+                this.logger.log('showScopeSelector true');
+                var selectorConfig = {
+                    context: this.getContext(),
+                    type: this.getSetting('selectorType') || this.portfolioItemTypes[1].typePath,
+                    stateId: this.getContext().getScopedStateId('app-selector'),
+                    width: '75%',
+                    listeners: {
+                        change: this.updatePortfolioItem,
+                        scope: this
+                    }
+                };
+
+                this.portfolioItemSelector = Ext.create('portfolio-item-selector', selectorConfig);
+                this.add(this.portfolioItemSelector);
+
+            } else {
+                this._addWaitingForSelectionContainer();
+                this.subscribe(this, 'portfolioItemSelected', this.updatePortfolioItem, this);
+                this.publish('requestPortfolioItem', this);
+            }
+        },
+        _addWaitingForSelectionContainer: function(){
+
+            var me = this;
+            if (this.gridboard){
+                this.gridboard.destroy();
+            }
+
+            this.gridboard = this.add({
+                xtype: 'container',
+                padding: 50,
+                html: '<div class="message">No Portfolio Item selected. <a href="#">Try Again</a></div>',
+                listeners: {
+                    scope: this,
+                    render: function(component) {
+                        var link = component.getEl().down('a');
+                        link.on('click', function(e) {
+                            me.publish('requestPortfolioItem', this);
+                        });
+                    }
+                }
+            });
+        },
+        _getChildTypePath: function(parentType){
+            var portfolioItemTypes = this.getPortfolioItemTypePathNames();
+            this.logger.log('_getChildTypePath', parentType, portfolioItemTypes);
+            var idx = _.indexOf(portfolioItemTypes, parentType.toLowerCase());
+            if (idx > 0){
+                return portfolioItemTypes[idx-1];
+            }
+            return null;
+        },
+        updatePortfolioItem: function(portfolioItem){
+            this.modelNames = [];
+            this.currentChildType = null;
+            this.selectedPortfolioItem = null;
+
+            if (!portfolioItem){
+                this._addWaitingForSelectionContainer();
+                return;
+            }
+
+            var childTypePath = this._getChildTypePath(portfolioItem.get('_type'));
+            if (!childTypePath){
+                this._addBlankGridboardMessage('Please select a ' + this.getPortfolioItemTypePathNames()[1] + ' or higher type of Portfolio Item to display its Portfolio Item children on this Kanban Board.');
+                return;
+            }
+
+            this.logger.log('updatePortfolioItem', portfolioItem, childTypePath);
+            this.modelNames = [childTypePath];
+            this.selectedPortfolioItem = portfolioItem;
+
+            Rally.technicalservices.WsapiToolbox.fetchTypeDefinition(childTypePath).then({
+                success: function(typeDefRecord){
+
+                    this.currentChildType = typeDefRecord;
+                    if(!this.rendered) {
+                        this.on('afterrender', this.loadGridBoard, this, {single: true});
+                    } else {
+                        this.loadGridBoard();
+                    }
+                },
+                failure: function(message){
+                    Rally.ui.notify.Notifier.showError({message: message});
                 },
                 scope: this
             });
+
+
         },
         loadGridBoard: function () {
+
+            if (this.gridboard) {
+                this.gridboard.destroy();
+            }
+            this.logger.log('loadGridBoard', this.modelNames, this.currentChildType, this.gridboard);
+
             return Rally.data.ModelFactory.getModels({
                 context: this.modelsContext || this.getContext(),
                 types: this.modelNames,
@@ -129,14 +225,7 @@
 
                     this.modelNames = _.keys(models);
 
-                    if (this.toggleState === 'grid') {
-                        return this.getGridStores().then({
-                            success: function (stores) {
-                                this.addGridBoard(stores);
-                            },
-                            scope: this
-                        });
-                    } else if(this.toggleState === 'board') {
+                    if(this.toggleState === 'board') {
                         return this.getCardBoardColumns().then({
                             success: function (columns) {
                                 this.addGridBoard({
@@ -212,7 +301,7 @@
                 filters: [
                     {
                         property: 'TypeDef',
-                        value: this.currentType.get('_ref')
+                        value: this.currentChildType.get('_ref')
                     },
                     {
                         property: 'Enabled',
@@ -233,87 +322,25 @@
             });
             return deferred.promise;
         },
-        getSettingsFields: function () {
-            return [{
-                name: 'groupHorizontallyByField',
-                xtype: 'rowsettingsfield',
-                fieldLabel: 'Swimlanes',
-                margin: '10 0 10 0',
-                mapsToMultiplePreferenceKeys: ['showRows', 'rowsField'],
-                readyEvent: 'ready',
-                whiteListFields: ['Parent'],
-                modelNames: this.piTypePicker.getAllTypeNames(),
-                isAllowedFieldFn: function (field) {
-                    var attr = field.attributeDefinition;
-                    return (attr.Custom && (attr.Constrained || attr.AttributeType.toLowerCase() !== 'string') ||
-                        attr.Constrained || _.contains(['boolean'], attr.AttributeType.toLowerCase())) &&
-                        !_.contains(['web_link', 'text', 'date'], attr.AttributeType.toLowerCase()) &&
-                        !_.contains(['Archived', 'Portfolio Item Type', 'State'], attr.Name);
-                }
-            },
-                {
-                    type: 'query',
-                    config: {
-                        plugins: [
-                            {
-                                ptype: 'rallyhelpfield',
-                                helpId: 271
-                            },
-                            'rallyfieldvalidationui'
-                        ]
-                    }
-                }];
+        getPortfolioItemTypePathNames: function(){
+            return _.map(this.portfolioItemTypes, function(t){ return t.typePath.toLowerCase(); });
         },
-        getGridStoreConfig: function () {
-            return _.merge({}, this.gridStoreConfig, { models: this.piTypePicker.getAllTypeNames() });
+        getSettingsFields: function (context, config) {
+            return Rally.technicalservices.Settings.getFields(this.getContext(), this.getSettings(), this.getPortfolioItemTypePathNames());
         },
-
-        _createPITypePicker: function () {
-            if (this.piTypePicker && this.piTypePicker.destroy) {
-                this.piTypePicker.destroy();
-            }
-            var deferred = new Deft.Deferred();
-            var piTypePickerConfig = {
-                preferenceName: this.getStateId('typepicker'),
-                fieldLabel: '', // delete this when removing PORTFOLIO_ITEM_TREE_GRID_PAGE_OPT_IN toggle. Can't delete these from PI Combobox right now or GUI tests fail in old PI page
-                labelWidth: 0,  // delete this when removing PORTFOLIO_ITEM_TREE_GRID_PAGE_OPT_IN toggle. Can't delete these from PI Combobox right now or GUI tests fail in old PI page
-                value: this.getSetting('type'),
-                context: this.getContext(),
-                listeners: {
-                    change: this._onTypeChange,
-                    ready: {
-                        fn: function (picker) {
-                            deferred.resolve(picker.getSelectedType());
-                        },
-                        single: true
-                    },
-                    scope: this
-                }
-            };
-
-            if(!this.config.piTypePickerConfig.renderInGridHeader){
-                piTypePickerConfig.renderTo = Ext.query('#content .titlebar .dashboard-timebox-container')[0];
+        _addBlankGridboardMessage: function(message){
+            if (this.gridboard){
+                this.gridboard.destroy();
             }
 
-            this.piTypePicker = Ext.create('Rally.ui.combobox.PortfolioItemTypeComboBox', piTypePickerConfig);
-
-            if(this.config.piTypePickerConfig.renderInGridHeader){
-                this.on('gridboardadded', function() {
-                    var headerContainer = this.gridboard.getHeader().getLeft();
-                    headerContainer.add(this.piTypePicker);
-                });
-            }
-
-            return deferred.promise;
+            this.gridboard = this.add({
+                xtype: 'container',
+                padding: 50,
+                html: Ext.String.format('<div class="message">{0}</div>',message),
+            });
         },
-        _onTypeChange: function (picker) {
-            var newType = picker.getSelectedType();
-
-            if (this._pickerTypeChanged(picker)) {
-                this.currentType = newType;
-                this.modelNames = [newType.get('TypePath')];
-                this.gridboard.fireEvent('modeltypeschange', this.gridboard, [newType]);
-            }
+        update: function(){
+            alert('hhhh');
         },
         _createFilterItem: function(typeName, config) {
             return Ext.apply({
@@ -325,20 +352,8 @@
         },
 
         addGridBoard: function(options){
-            if (this.gridboard && this.piTypePicker && this.piTypePicker.rendered) {
-                var parent = this.piTypePicker.up();
-                if(parent && parent.remove){
-                    parent.remove(this.piTypePicker, false);
-                }
-            }
-
-            if (this.gridboard) {
-                this.gridboard.destroy();
-            }
 
             this.gridboard = Ext.create('Rally.ui.gridboard.GridBoard', this.getGridBoardConfig(options));
-            this.gridboard.on('modeltypeschange', this.onTypesChange, this);
-            this.gridboard.on('toggle', this._onGridBoardToggle, this);
             this.gridboard.on('filtertypeschange', this.onFilterTypesChange, this);
 
             this.add(this.gridboard);
@@ -346,22 +361,8 @@
             this.fireEvent('gridboardadded', this.gridboard);
 
             this.gridboard.getHeader().getRight().add([
-                this._buildHelpComponent(),
                 this._buildFilterInfo()
             ]);
-        },
-        _onGridBoardToggle: function (toggleState, gridOrBoard) {
-            this.toggleState = toggleState;
-
-            if (!gridOrBoard) {
-                this.loadGridBoard();
-            }
-        },
-        onTypesChange: function (gridboard, newTypes) {
-            this.modelNames = _.map(newTypes, function (type) {
-                return type.isModel ? type.get('TypePath') : type;
-            });
-            this.loadGridBoard();
         },
         getGridBoardPlugins: function () {
 
@@ -397,8 +398,6 @@
                         headerPosition: 'left'
                     }, this.getFieldPickerConfig())
                 ])
-                .concat(this.enableGridBoardToggle ? this.getGridBoardTogglePluginConfig() : [])
-                .concat(this.getActionsMenuConfig())
                 .concat([{
                     ptype: 'rallyboardpolicydisplayable',
                     pluginId: 'boardPolicyDisplayable',
@@ -409,11 +408,7 @@
                     }
                 }]);
         },
-        getGridBoardTogglePluginConfig: function () {
-            return {
-                ptype: 'rallygridboardtoggleable'
-            };
-        },
+
         getFilterControlConfig: function () {
             var config = {
                     blackListFields: ['PortfolioItemType'],
@@ -453,7 +448,7 @@
         },
         getCardBoardConfig: function (options) {
             options = options || {};
-            var currentTypePath = this.currentType.get('TypePath');
+            var currentTypePath = this.currentChildType.get('TypePath');
             var filters = [];
 
             if (this.getSetting('query')) {
@@ -504,11 +499,12 @@
 
         getCardBoardColumnPlugins: function (state) {
             var policyPlugin = this.gridboard && this.gridboard.getPlugin('boardPolicyDisplayable');
+
             return {
                 ptype: 'rallycolumnpolicy',
                 policyCmpConfig: {
                     xtype: 'rallyportfoliokanbanpolicy',
-                    hidden: !policyPlugin || !policyPlugin.isChecked(),
+                    hidden: !policyPlugin,
                     title: 'Exit Policy',
                     stateRecord: state
                 }
@@ -525,15 +521,6 @@
             Rally.environment.getMessageBus().publish(Rally.Message.piKanbanBoardReady);
         },
 
-        _buildHelpComponent: function (config) {
-            return this.isFullPageApp ? null : Ext.create('Ext.Component', Ext.apply({
-                cls: 'help-field ' + Rally.util.Test.toBrowserTestCssClass('portfolio-kanban-help-container'),
-                renderTpl: Rally.util.Help.getIcon({
-                    id: 265
-                })
-            }, config));
-        },
-
         _buildFilterInfo: function () {
             this.filterInfo = this.isFullPageApp ? null : Ext.create('Rally.ui.tooltip.FilterInfo', {
                 projectName: this.getSetting('project') && this.getContext().get('project').Name || 'Following Global Project Setting',
@@ -544,61 +531,9 @@
 
             return this.filterInfo;
         },
-        _pickerTypeChanged: function(picker){
-            var newType = picker.getSelectedType();
-            return newType && this.currentType && newType.get('_ref') !== this.currentType.get('_ref');
-        },
 
         _publishContentUpdatedNoDashboardLayout: function () {
             this.fireEvent('contentupdated', { dashboardLayout: false });
-        },
-
-        onDestroy: function() {
-            this.callParent(arguments);
-            if(this.piTypePicker) {
-                this.piTypePicker.destroy();
-                delete this.piTypePicker;
-            }
-        },
-        getGridStores: function () {
-            return this._getTreeGridStore();
-        },
-
-        _getTreeGridStore: function () {
-            return Ext.create('Rally.data.wsapi.TreeStoreBuilder').build(_.merge({
-                autoLoad: false,
-                childPageSizeEnabled: true,
-                context: this._getGridBoardContext().getDataContext(),
-                enableHierarchy: true,
-                fetch: _.union(['Workspace'], this.columnNames),
-                models: _.clone(this.models),
-                pageSize: 25,
-                remoteSort: true,
-                root: {expanded: true}
-            }, this.getGridStoreConfig())).then({
-                success: function (treeGridStore) {
-                    treeGridStore.on('load', this._fireTreeGridReady, this, { single: true });
-                    return { gridStore: treeGridStore };
-                },
-                scope: this
-            });
-        },
-
-        _fireTreeGridReady: function () {
-            var grid = this.gridboard && this.gridboard.getToggleState() === 'grid' && this.gridboard.getGridOrBoard();
-
-            if (grid) {
-                this.onTreeGridReady(grid);
-            } else {
-                this.on('gridboardadded', this._fireTreeGridReady, this, { single: true });
-            }
-        },
-
-        onTreeGridReady: function (grid) {
-            this.publishComponentReady();
-        },
-        getGridStoreConfig: function () {
-            return this.gridStoreConfig || {};
         },
 
         getGridBoardConfig: function (options) {
@@ -612,8 +547,13 @@
                 plugins: this.getGridBoardPlugins(options),
                 cardBoardConfig: this.getCardBoardConfig(options),
                 chartConfig: this.getChartConfig(),
-                gridConfig: this.getGridConfig(options),
-                height: this.getHeight()
+                height: this.getHeight(),
+                storeConfig: {
+                    filters: [{
+                        property: 'Parent',
+                        value: this.selectedPortfolioItem.get('_ref')
+                    }]
+                }
             };
         },
 
@@ -633,33 +573,6 @@
         _shouldEnableRanking: function() {
             return this.enableRanking && Rally.data.ModelTypes.areArtifacts(this.modelNames) && this.getContext().getWorkspace().WorkspaceConfiguration.DragDropRankingEnabled;
         },
-        getGridConfig: function (options) {
-            var config = {
-                xtype: 'rallytreegrid',
-                alwaysShowDefaultColumns: false,
-                bufferedRenderer: true,
-                columnCfgs: this.getColumnCfgs(),
-                enableBulkEdit: true,
-                allowExpansionStateToBeSaved: this.allowExpansionStateToBeSaved,
-                enableInlineAdd: Rally.data.ModelTypes.areArtifacts(this.modelNames),
-                enableRanking: this._shouldEnableRanking(),
-                enableSummaryRow: Rally.data.ModelTypes.areArtifacts(this.modelNames),
-                expandAllInColumnHeaderEnabled: true,
-                plugins: this.getGridPlugins(),
-                stateId: this.getScopedStateId('grid'),
-                stateful: true,
-                store: options && options.gridStore,
-                storeConfig: {
-                    filters: this.getPermanentFilters()
-                }
-            };
-
-            if (this.modelNames.length === 1 && !Rally.data.ModelTypes.isArtifact(this.modelNames[0])) {
-                config.noDataItemName = this.modelNames[0].toLowerCase();
-            }
-
-            return _.merge( config, this.gridConfig );
-        },
         getPermanentFilters: function() {
             return [];
         },
@@ -674,104 +587,11 @@
                 allowExpansionStateToBeSaved: this.allowExpansionStateToBeSaved
             }];
         },
-        getActionsMenuConfig: function () {
-            var importItems = this._getImportItems();
-            var printItems = this._getPrintItems();
-            var exportItems = this._getExportItems();
-
-            var tooltipTypes = []
-                .concat(importItems.length ? 'Import' : [])
-                .concat(exportItems.length ? 'Export' : [])
-                .concat(printItems.length ? 'Print' : []);
-
-            var menuItems = this.actionMenuItems.concat(importItems, exportItems, printItems);
-
-            return tooltipTypes.length === 0 || this.toggleState === 'board' ? [] : [{
-                ptype: 'rallygridboardactionsmenu',
-                menuItems: menuItems,
-                buttonConfig: {
-                    disabled: this.toggleState !== 'grid',
-                    iconCls: 'icon-export',
-                    toolTipConfig: {
-                        html: tooltipTypes.join('/'),
-                        anchor: 'top',
-                        hideDelay: 0
-                    }
-                }
-            }];
-        },
 
         _getGridBoardContext: function () {
             return this.isWorkspaceScoped ? this.getContext().clone({ project: null }) : this.getContext();
         },
 
-        _getImportItems: function () {
-            if (!this.enableImport) {
-                return [];
-            }
-
-            var piTypesExist = _.any(this.models, function (model) { return model.isPortfolioItem(); });
-
-            var importableTypes = _(this.models).filter(function (model) {
-                return !model.isPortfolioItem() && model.isImportable();
-            }, this).map(function (model) {
-                return { typePath: model.typePath, displayName: model.displayName };
-            }).concat(piTypesExist ? [{ typePath: 'PortfolioItem', displayName: 'Portfolio Item'}] : []).sortBy('displayName').value();
-
-            return _.map(importableTypes, function (type) {
-                var displayName = Ext.util.Inflector.pluralize(type.displayName);
-                return  {
-                    text: 'Import ' + displayName + '...',
-                    handler: function() {
-                        Ext.widget({
-                            xtype: 'rallycsvimportdialog',
-                            type: type.typePath,
-                            title: 'Import ' + displayName
-                        });
-                    }
-                };
-            }, this);
-        },
-
-        _getExportItems: function() {
-            var exportItems = [];
-
-            if(this.enableCsvExport) {
-                exportItems.push({
-                    text: 'Export to CSV...',
-                    handler: function() {
-                        window.location = Rally.ui.gridboard.Export.buildCsvExportUrl(this.gridboard.getGridOrBoard());
-                    },
-                    scope: this
-                });
-            }
-            if(this.xmlExportEnabled()) {
-                exportItems.push({
-                    text: 'Export to XML...',
-                    handler: function() {
-                        window.location = Rally.ui.gridboard.Export.buildXmlExportUrl(this.gridboard.getGridOrBoard());
-                    },
-                    scope: this
-                });
-            }
-
-            return exportItems;
-        },
-
-        _getPrintItems: function() {
-            return !this.enablePrint || this.toggleState === 'chart' ? [] : [{
-                text: 'Print ...',
-                handler: function() {
-                    Ext.create('Rally.ui.grid.TreeGridPrintDialog', {
-                        grid: this.gridboard.getGridOrBoard(),
-                        treeGridPrinterConfig: {
-                            largeHeaderText: this.printHeaderLabel
-                        }
-                    });
-                },
-                scope: this
-            }];
-        },
         getAddNewConfig: function () {
             return _.merge({
                 context: this.getContext(),

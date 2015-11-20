@@ -104,6 +104,7 @@ Ext.define('portfolio-item-selector', {
                 text: this.buttonText,
                 cls: 'rly-small primary',
                 margin: 10,
+                width: 63,
                 listeners: {
                     scope: this,
                     click: this._showPicker
