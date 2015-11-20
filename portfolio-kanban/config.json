@@ -1,0 +1,19 @@
+{
+    "name": "Portfolio Kanban",
+    "className": "portfolio-kanban",
+    "server": "https://demo-west.rallydev.com",
+    "sdk": "2.0",
+    "apiKey": "_PUT_APIKEY_HERE_",
+    "javascript": [
+        "src/javascript/__ts-info-link.js",
+        "src/javascript/__ts-logger.js",
+        "src/javascript/Settings.js",
+        "../common/src/javascript/toolbox.js",
+        "../common/src/javascript/portfolio-item-selector.js",
+        "src/javascript/RowSettingsField.js",
+        "src/javascript/GridBoardAppResizer.js",
+        "src/javascript/PortfolioKanbanCard.js",
+        "src/javascript/PortfolioKanbanPolicy.js",
+        "src/javascript/PortfolioKanbanApp.js"
+    ]
+}
