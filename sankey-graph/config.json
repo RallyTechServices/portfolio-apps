@@ -1,0 +1,17 @@
+{
+    "name": "Portfolio Item Sankey Graph",
+    "className": "portfolio-sankey-graph",
+    "server": "https://demo-west.rallydev.com",
+    "sdk": "2.0",
+    "apiKey": "_PUT_APIKEY_HERE_",
+    "javascript": [
+        "src/javascript/__ts-info-link.js",
+        "src/javascript/__ts-logger.js",
+        "src/javascript/_vendor.d3.js",
+        "src/javascript/_vendor.sankey.js",
+        "../common/src/javascript/toolbox.js",
+        "../common/src/javascript/portfolio-item-selector.js",
+        "src/javascript/settings.js",
+        "src/javascript/app.js"
+    ]
+}

@@ -127,7 +127,6 @@
                         scope: this
                     }
                 };
-
                 this.portfolioItemSelector = Ext.create('portfolio-item-selector', selectorConfig);
                 this.add(this.portfolioItemSelector);
 
