@@ -280,7 +280,22 @@ Ext.define("portfolio-item-grid", {
                        margin:  '0 10 0 0',
                        stateId: this.getContext().getScopedStateId('portfolio-owner-filter')
                     }
+                },{
+                ptype: 'rallygridboardactionsmenu',
+                menuItems: [
+                    {
+                        text: 'Export...',
+                        handler: function() {
+                            window.location = Rally.ui.grid.GridCsvExport.buildCsvExportUrl(
+                                this.down('rallygridboard').getGridOrBoard());
+                        },
+                        scope: this
+                    }
+                ],
+                buttonConfig: {
+                    iconCls: 'icon-export'
                 }
+            }
 
             ],
             storeConfig: {
