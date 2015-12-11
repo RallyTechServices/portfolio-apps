@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Picker</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Thu Nov 12 2015 08:59:09 GMT-0800 (PST) -->
+    <!--  Build Date: Fri Dec 11 2015 17:52:52 GMT-0600 (CST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu Nov 12 2015 08:59:09 GMT-0800 (PST)";
-        var CHECKSUM = 20463950983;
+        var APP_BUILD_DATE = "Fri Dec 11 2015 17:52:52 GMT-0600 (CST)";
+        var CHECKSUM = 22309749095;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -436,30 +436,44 @@ Ext.define("portfolio-item-grid", {
             context: this.getContext(),
             //** addNewPluginConfig: this.getAddNewConfig(),
             plugins:  [{
-                ptype: 'rallygridboardaddnew',
-                margin: 10
+                ptype: 'rallygridboardaddnew'
                 },{
                     ptype: 'rallygridboardfieldpicker',
                     headerPosition: 'left',
                     modelNames: modelNames,
-                    margin: 10,
+                    margin: '0 10 0 0',
                     stateful: true,
                     stateId: this.getContext().getScopedStateId('portfolio-grid-columns')
                 },{
                     ptype: 'rallygridboardcustomfiltercontrol',
                     filterControlConfig: {
                         modelNames: modelNames,
-                        margin: 10,
+                        margin:  '0 10 0 0',
                         stateful: true,
                         stateId: this.getContext().getScopedStateId('portfolio-grid-filter')
                     },
                     showOwnerFilter: true,
                     ownerFilterControlConfig: {
                        stateful: true,
-                       margin: 10,
+                       margin:  '0 10 0 0',
                        stateId: this.getContext().getScopedStateId('portfolio-owner-filter')
                     }
+                },{
+                ptype: 'rallygridboardactionsmenu',
+                menuItems: [
+                    {
+                        text: 'Export...',
+                        handler: function() {
+                            window.location = Rally.ui.grid.GridCsvExport.buildCsvExportUrl(
+                                this.down('rallygridboard').getGridOrBoard());
+                        },
+                        scope: this
+                    }
+                ],
+                buttonConfig: {
+                    iconCls: 'icon-export'
                 }
+            }
 
             ],
             storeConfig: {
@@ -703,6 +717,7 @@ Ext.define('portfolio-item-selector', {
                 text: this.buttonText,
                 cls: 'rly-small primary',
                 margin: 10,
+                width: 63,
                 listeners: {
                     scope: this,
                     click: this._showPicker
@@ -925,6 +940,31 @@ Ext.define('Rally.technicalservices.WsapiToolbox', {
             }
         });
         return deferred.promise;
+    },
+    fetchTypeDefinition: function(typePath){
+        var deferred = Ext.create('Deft.Deferred');
+
+        var store = Ext.create('Rally.data.wsapi.Store',{
+            model: 'TypeDefinition',
+            fetch: ['TypePath','Name'],
+            filters: [{
+                property: 'TypePath',
+                value: typePath
+            }]
+        }).load({
+            callback: function(records, operation, success){
+                if (success && records && records.length > 0){
+                    deferred.resolve(records[0]);
+                } else {
+                    var message = "No records returned when loading Type Definition for " + typePath;
+                    if (!success){
+                        message = "Error loading Type Definition for " + typePath + ':  ' + operation.error.errors.join(',');
+                    }
+                    deferred.reject(message); //(Ext.String.format("Error getting TypeDefinition for {1}: {0}", operation.error.errors.join(','), typeDef));
+                }
+            }
+        });
+        return deferred;
     }
 });
 
