@@ -88,8 +88,6 @@ Ext.define('portfolio-item-selector', {
     },
     _addSelector : function()
     {
-
-
          this.removeAll();
         if (!this.type){
             this.add({
@@ -121,10 +119,8 @@ Ext.define('portfolio-item-selector', {
                 '<tpl if="xindex < xcount">,</tpl>' +
                 '</tpl>'
             });
-            //cb.on('change', this._updatePortfolioItem, this);
+            cb.on('ready', this._updatePortfolioItem, this);
             this.add(cb);
-
-
 
             this.add({
                 xtype: 'rallybutton',

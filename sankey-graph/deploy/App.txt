@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Sankey Graph</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Feb 22 2016 18:16:11 GMT-0700 (MST) -->
+    <!--  Build Date: Mon Feb 22 2016 18:18:33 GMT-0700 (MST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Feb 22 2016 18:16:11 GMT-0700 (MST)";
-        var CHECKSUM = 3157789740376;
+        var APP_BUILD_DATE = "Mon Feb 22 2016 18:18:33 GMT-0700 (MST)";
+        var CHECKSUM = 3157743768777;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -10069,8 +10069,6 @@ Ext.define('portfolio-item-selector', {
     },
     _addSelector : function()
     {
-
-
          this.removeAll();
         if (!this.type){
             this.add({
@@ -10102,10 +10100,8 @@ Ext.define('portfolio-item-selector', {
                 '<tpl if="xindex < xcount">,</tpl>' +
                 '</tpl>'
             });
-            //cb.on('change', this._updatePortfolioItem, this);
+            cb.on('ready', this._updatePortfolioItem, this);
             this.add(cb);
-
-
 
             this.add({
                 xtype: 'rallybutton',
