@@ -12,7 +12,7 @@ Ext.define('portfolio-item-selector', {
     stateEvents: ['change'],
 
     type: null,
-    buttonText: 'Select...',
+    buttonText: 'Go',
 
     constructor : function(config)
     {
@@ -22,8 +22,8 @@ Ext.define('portfolio-item-selector', {
     initComponent : function()
     {
         this.callParent(arguments);
+        this.removeAll();
         this._addSelector();
-        this.addEvents('change');
 
         // configured to allow others to ask what the current selection is,
         // in case they missed the initial message
@@ -73,25 +73,24 @@ Ext.define('portfolio-item-selector', {
             this._updatePortfolioItem(null);
         }
     },
-    _updatePortfolioItem: function(portfolioItem){
-        this.portfolioItem = portfolioItem;
-        var ct = this.down('#portfolio-item-description');
-        if (ct){
-            if (this.portfolioItem){
-                ct.update(this.portfolioItem.getData());
-            } else {
-                ct.update({});
+    _updatePortfolioItem: function(){
+        var cb = this.down('#cb-portfolioitem');
+        if (cb){
+            var portfolioItem = cb.getRecord();
+            this.portfolioItem = portfolioItem;
+            this.fireEvent('change', portfolioItem);
+            this.publish('portfolioItemSelected', portfolioItem);
+            if (this.stateful && this.stateId){
+                this.saveState();
             }
         }
-        this.fireEvent('change', portfolioItem);
-        this.publish('portfolioItemSelected', portfolioItem);
-        if (this.stateful && this.stateId){
-            this.saveState();
-        }
+
     },
     _addSelector : function()
     {
-        this.removeAll();
+
+
+         this.removeAll();
         if (!this.type){
             this.add({
                 xtype: 'container',
@@ -99,39 +98,45 @@ Ext.define('portfolio-item-selector', {
                 padding: 10
             });
         } else {
+
+            var cb = Ext.create('Rally.ui.combobox.ComboBox',{
+                storeConfig: {
+                    model: this.type,
+                    fetch: ['FormattedID','ObjectID','Name'],
+                    remoteFilter: false,
+                    autoLoad: true
+                },
+                itemId: 'cb-portfolioitem',
+                margin: 10,
+                valueField: 'ObjectID',
+                displayField: 'FormattedID',
+                width: 600,
+                listConfig: {
+                    itemTpl: '{FormattedID}: {Name}'
+                },
+                filterProperties: ['Name','FormattedID'],
+                fieldCls: 'pi-selector',
+                displayTpl: '<tpl for=".">' +
+                '{[values["FormattedID"]]}: {[values["Name"]]}' +
+                '<tpl if="xindex < xcount">,</tpl>' +
+                '</tpl>'
+            });
+            //cb.on('change', this._updatePortfolioItem, this);
+            this.add(cb);
+
+
+
             this.add({
                 xtype: 'rallybutton',
                 text: this.buttonText,
                 cls: 'rly-small primary',
                 margin: 10,
-                width: 63,
                 listeners: {
                     scope: this,
-                    click: this._showPicker
+                    click: this._updatePortfolioItem
                 }
             });
-            var ct = this.add({
-                xtype:'container',
-                itemId:'portfolio-item-description',
-                margin: 10,
-                tpl:'<tpl if="FormattedID"><div class="portfolio-item">{FormattedID}:  {Name}</div><tpl else><div class="message">Please select a Portfolio Item</div></tpl>'
-            });
         }
-    },
-    _showPicker: function(){
-        var types = [this.type];
-        Ext.create('Rally.ui.dialog.ArtifactChooserDialog', {
-            artifactTypes: types,
-            autoShow: true,
-            height: 250,
-            title: 'Select Portfolio Item',
-            listeners: {
-                artifactchosen: function(dialog, selectedRecord){
-                    this._updatePortfolioItem(selectedRecord);
-                },
-                scope: this
-            }
-        });
     },
     _requestPorfolioItem : function() {
         this.publish('portfolioItemSelected', this.portfolioItem || null);

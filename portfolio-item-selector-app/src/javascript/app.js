@@ -8,11 +8,16 @@ Ext.define("portfolio-item-selector-app", {
     },
     _addSelector: function(){
         this.removeAll();
+        this.logger.log('selectorType', this.getSetting('selectorType'));
+
         this.add({
             xtype: 'portfolioitemselector',
             type: this.getSetting('selectorType'),
-            stateId: this.getContext().getScopedStateId('app-selector')
+            stateId: this.getContext().getScopedStateId('app-selector'),
+            flex: 1
         })
+
+
     },
     getOptions: function() {
         return [
