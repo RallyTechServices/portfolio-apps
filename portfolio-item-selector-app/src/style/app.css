@@ -15,3 +15,8 @@
     margin-right: 5px;
     cursor: pointer;
 }
+
+.pi-selector {
+    font-size: 12pt;
+    font-family: 'ProximaNovaSemiBold'
+}

@@ -3,10 +3,10 @@
 <head>
     <title>Portfolio Item Selector</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Nov 03 2015 16:15:55 GMT-0700 (MST) -->
+    <!--  Build Date: Mon Feb 22 2016 17:02:41 GMT-0700 (MST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Nov 03 2015 16:15:55 GMT-0700 (MST)";
+        var APP_BUILD_DATE = "Mon Feb 22 2016 17:02:41 GMT-0700 (MST)";
         var CHECKSUM = [%= checksum %];
     </script>
     
@@ -52,6 +52,11 @@
     margin-top: 25px;
     margin-right: 5px;
     cursor: pointer;
+}
+
+.pi-selector {
+    font-size: 12pt;
+    font-family: 'ProximaNovaSemiBold'
 }
     </style>
 
