@@ -6,7 +6,7 @@
         logger: new Rally.technicalservices.Logger(),
         cls: "portfolio-cfd-app",
 
-        type: this.getSetting('selectorType'),
+        type: null,
         chartComponentConfig: {
             xtype: "rallychart",
 

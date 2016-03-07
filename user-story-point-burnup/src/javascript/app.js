@@ -29,6 +29,7 @@ Ext.define("user-story-point-burnup", {
                 },
                 fetch: ["ScheduleState", "PlanEstimate"],
                 hydrate: ["ScheduleState"],
+                removeUnauthorizedSnapshots: true,
                 sort: {
                     "_ValidFrom": 1
                 }
