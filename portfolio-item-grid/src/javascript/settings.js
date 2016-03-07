@@ -22,8 +22,8 @@
             'Rally.ui.CheckboxField'
         ],
 
-        getFields: function (context) {
-
+        getFields: function (context, settings) {
+            console.log('settings', settings);
             var type_filters = Rally.data.wsapi.Filter.or([
                 {property: 'TypePath', value: 'HierarchicalRequirement'},
                 {property: 'TypePath', operator: 'contains', value: 'PortfolioItem/'}
@@ -95,13 +95,24 @@
                         }
                     }
                 },
+                {
+                    xtype: 'rallyfieldpicker',
+                    name: 'columns',
+                    autoExpand: true,
+                    modelTypes: ['HierarchicalRequirement'],
+                    handlesEvents: {
+                        typeselected: function(cb){
+                            this.refreshWithNewModelTypes([cb]);
+                        }
+                    }
+                },
                 { type: 'query' },
                 {
                     name: 'showControls',
                     xtype: 'rallycheckboxfield',
                     fieldLabel: 'Show Control Bar'
                 },
-                getHiddenFieldConfig('columnNames'),
+               // getHiddenFieldConfig('columnNames'),
                 getHiddenFieldConfig('order')
             ];
         }

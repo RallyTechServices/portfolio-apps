@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Point Burnup</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Feb 22 2016 18:18:24 GMT-0700 (MST) -->
+    <!--  Build Date: Mon Mar 07 2016 10:12:21 GMT-0700 (MST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Feb 22 2016 18:18:24 GMT-0700 (MST)";
-        var CHECKSUM = 46883594536;
+        var APP_BUILD_DATE = "Mon Mar 07 2016 10:12:21 GMT-0700 (MST)";
+        var CHECKSUM = 46987969704;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -993,6 +993,7 @@ Ext.define("user-story-point-burnup", {
                 },
                 fetch: ["ScheduleState", "PlanEstimate"],
                 hydrate: ["ScheduleState"],
+                removeUnauthorizedSnapshots: true,
                 sort: {
                     "_ValidFrom": 1
                 }
