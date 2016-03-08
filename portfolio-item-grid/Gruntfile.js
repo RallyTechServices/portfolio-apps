@@ -139,7 +139,7 @@ module.exports = function(grunt) {
         
     });
 
-        grunt.registerTask('install', 'Deploy the app to a rally instance', function() {
+    grunt.registerTask('install', 'Deploy the app to a rally instance', function() {
         
         if ( ! config.auth ) { 
             grunt.log.writeln("To deploy, define server, username and password in auth.json file");
