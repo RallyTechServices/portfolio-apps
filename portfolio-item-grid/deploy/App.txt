@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Picker</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Feb 29 2016 19:06:14 GMT-0700 (MST) -->
+    <!--  Build Date: Mon Mar 07 2016 16:09:25 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Feb 29 2016 19:06:14 GMT-0700 (MST)";
-        var CHECKSUM = 28716961105;
+        var APP_BUILD_DATE = "Mon Mar 07 2016 16:09:25 GMT-0800 (PST)";
+        var CHECKSUM = 32118365662;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -176,6 +176,54 @@ Ext.define('Rally.technicalservices.Logger',{
 
 });
 
+Ext.override(Rally.ui.grid.TreeGrid,{
+
+    /* 
+     * Override applyState so that the grid's state is merged with the provided configured
+     * columns.  This allows changes to the required columns to be applied.
+     */
+    applyState: function(state) {
+        
+        if (state) {
+            if (state.columns) {
+                
+                // state columns might be objects, and column configs be an array of strings
+                var cfg_by_index = {};
+                Ext.Array.each(state.columns, function(column){
+                    if ( Ext.isObject(column) ) {
+                        cfg_by_index[column.dataIndex] = column;
+                    }
+                });
+                
+                // for columns passed in, use state-saved version if available
+                var cfgs = Ext.Array.map(this.columnCfgs, function(col) {
+                    if ( !Ext.isEmpty(cfg_by_index[col]) ) {
+                        return cfg_by_index[col];
+                    }
+                    return col;
+                });
+                
+                // put any state saved ones that weren't passed in at the end
+                this.columnCfgs = Ext.Array.filter( 
+                    Ext.Array.merge(cfgs, state.columns),
+                    function(col) {
+                        return ( col != 'FormattedID' );
+                });
+            }
+
+            if (state.sorters && this.storeConfig ) {
+                this.storeConfig.sorters = _.map(state.sorters, function(sorterState) {
+                    return Ext.create('Ext.util.Sorter', {
+                        property: sorterState.property,
+                        direction: sorterState.direction
+                    });
+                });
+            }
+        }
+    }
+});
+
+
 Ext.define("portfolio-item-grid", {
     extend: 'Rally.app.App',
     componentCls: 'app',
@@ -235,6 +283,7 @@ Ext.define("portfolio-item-grid", {
                 xtype: 'portfolioitemselector',
                 context: this.getContext(),
                 type: this.getSetting('selectorType'),
+                stateful: false,
                 stateId: this.getContext().getScopedStateId('app-selector'),
                 width: '75%',
                 listeners: {
@@ -424,6 +473,7 @@ Ext.define("portfolio-item-grid", {
         }
         return [];
     },
+    
     addGridBoard: function (store) {
 
         if (this.getGridboard()) {
@@ -431,37 +481,42 @@ Ext.define("portfolio-item-grid", {
         }
 
         var modelNames =  _.clone(this.modelNames),
-            context = this.getContext();
-        this.logger.log('addGridBoard', store, modelNames, this.getSetting('columns'), this.getPermanentFilters().toString());
+            context = this.getContext(),
+            columns = this._getColumns(),
+            filters = this.getPermanentFilters(),
+            alwaysSelectedFields = this._getAlwaysSelectedFields();
+            
+        this.logger.log('addGridBoard', store, modelNames, alwaysSelectedFields, columns, filters.toString());
+        
         var gridboard = Ext.create('Rally.ui.gridboard.GridBoard', {
             itemId: 'gridboard',
             toggleState: 'grid',
             modelNames: modelNames,
             context: this.getContext(),
-             //stateful: true,
-            //stateId: this.getContext().getScopedStateId('portfolio-grid-z'),
+//            stateful: true,
+//            stateId: this.getContext().getScopedStateId('portfolio-grid-2'),
+//            states: ['load'],
             plugins:  [{
                 ptype: 'rallygridboardaddnew'
                 },{
                     ptype: 'rallygridboardfieldpicker',
                     headerPosition: 'left',
                     modelNames: modelNames,
-                    //margin: '0 10 0 0',
-                    //stateful: true,
-                    //stateId: this.getContext().getScopedStateId('portfolio-grid-columns-1')
+                    gridAlwaysSelectedValues: alwaysSelectedFields,
+                    margin: '3 0 0 10'
                 },{
                     ptype: 'rallygridboardcustomfiltercontrol',
                     filterControlConfig: {
                         modelNames: modelNames,
                        // margin:  '0 10 0 0',
                         stateful: true,
-                        stateId: this.getContext().getScopedStateId('portfolio-grid-filter-1')
+                        stateId: this.getContext().getScopedStateId('portfolio-grid-filter-2')
                     },
                     showOwnerFilter: true,
                     ownerFilterControlConfig: {
                        stateful: true,
+                       stateId: this.getContext().getScopedStateId('portfolio-owner-filter-2')
                        //margin:  '0 10 0 0',
-                       stateId: this.getContext().getScopedStateId('portfolio-owner-filter-1')
                     }
                 },{
                 ptype: 'rallygridboardactionsmenu',
@@ -482,12 +537,15 @@ Ext.define("portfolio-item-grid", {
 
             ],
             storeConfig: {
-                filters: this.getPermanentFilters()
+                filters: filters
             },
             gridConfig: {
                // allColumnsStateful: true,
+                stateful: true,
+                stateId: this.getContext().getScopedStateId('portfolio-grid-grid-2'),
+                state: ['columnschanged','viewready','reconfigure'],
                 store: store,
-                columnCfgs: this.getSetting('columns'),
+                columnCfgs: columns,
                 height: this.getHeight()
             }
         });
@@ -498,6 +556,24 @@ Ext.define("portfolio-item-grid", {
             gridboard.getHeader().hide();
         }
     },
+    
+    _getAlwaysSelectedFields: function() {
+        var setting = this.getSetting('columnNames') ;
+        
+        if ( Ext.isEmpty(setting) ) {
+            return [];
+        }
+        
+        if ( Ext.isString(setting) ) {
+            return setting.split(',');
+        }
+        return setting;
+    },
+
+    _getColumns: function() {
+        return this._getAlwaysSelectedFields();
+    },
+    
     _shouldEnableAddNew: function() {
         return !_.contains(this.disallowedAddNewTypes, this.getSetting('type').toLowerCase());
     },
@@ -606,7 +682,7 @@ Ext.define("portfolio-item-grid", {
                 },
                 {
                     xtype: 'rallyfieldpicker',
-                    name: 'columns',
+                    name: 'columnNames',
                     autoExpand: true,
                     modelTypes: ['HierarchicalRequirement'],
                     handlesEvents: {

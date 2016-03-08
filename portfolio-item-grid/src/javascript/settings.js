@@ -97,7 +97,7 @@
                 },
                 {
                     xtype: 'rallyfieldpicker',
-                    name: 'columns',
+                    name: 'columnNames',
                     autoExpand: true,
                     modelTypes: ['HierarchicalRequirement'],
                     handlesEvents: {
