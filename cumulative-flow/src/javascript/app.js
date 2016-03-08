@@ -118,7 +118,7 @@
             //Ext.create('Rally.apps.charts.IntegrationHeaders',this).applyTo(this.chartComponentConfig.storeConfig);
         },
         addComponents: function(){
-            this.logger.log('addComponents',this.portfolioItemTypes);
+            this.logger.log('addComponents');
 
             if (this.headerContainer){
                 this.headerContainer.destroy();
@@ -135,6 +135,7 @@
                     xtype: 'portfolioitemselector',
                     context: this.getContext(),
                     stateId: this.getContext().getScopedStateId('app-selector'),
+                    type: this.getSetting('selectorType'),
                     width: '75%',
                     listeners: {
                         change: this.updatePortfolioItem,

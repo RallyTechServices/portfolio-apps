@@ -34,7 +34,8 @@ Ext.override(Rally.ui.combobox.ComboBox, {
                 root: 'data',
                 property: me.filterProperties
             });
-            me.store.addFilter(me.queryFilter, true);
+                        
+            me.store.addFilter(me.queryFilter, false);
         }
 
         // Querying by a string...

@@ -57,6 +57,7 @@ Ext.define("portfolio-item-grid", {
                 xtype: 'portfolioitemselector',
                 context: this.getContext(),
                 type: this.getSetting('selectorType'),
+                stateful: false,
                 stateId: this.getContext().getScopedStateId('app-selector'),
                 width: '75%',
                 listeners: {
@@ -246,6 +247,7 @@ Ext.define("portfolio-item-grid", {
         }
         return [];
     },
+    
     addGridBoard: function (store) {
 
         if (this.getGridboard()) {
@@ -253,37 +255,42 @@ Ext.define("portfolio-item-grid", {
         }
 
         var modelNames =  _.clone(this.modelNames),
-            context = this.getContext();
-        this.logger.log('addGridBoard', store, modelNames, this.getSetting('columns'), this.getPermanentFilters().toString());
+            context = this.getContext(),
+            columns = this._getColumns(),
+            filters = this.getPermanentFilters(),
+            alwaysSelectedFields = this._getAlwaysSelectedFields();
+            
+        this.logger.log('addGridBoard', store, modelNames, alwaysSelectedFields, columns, filters.toString());
+        
         var gridboard = Ext.create('Rally.ui.gridboard.GridBoard', {
             itemId: 'gridboard',
             toggleState: 'grid',
             modelNames: modelNames,
             context: this.getContext(),
-             //stateful: true,
-            //stateId: this.getContext().getScopedStateId('portfolio-grid-z'),
+//            stateful: true,
+//            stateId: this.getContext().getScopedStateId('portfolio-grid-2'),
+//            states: ['load'],
             plugins:  [{
                 ptype: 'rallygridboardaddnew'
                 },{
                     ptype: 'rallygridboardfieldpicker',
                     headerPosition: 'left',
                     modelNames: modelNames,
-                    //margin: '0 10 0 0',
-                    //stateful: true,
-                    //stateId: this.getContext().getScopedStateId('portfolio-grid-columns-1')
+                    gridAlwaysSelectedValues: alwaysSelectedFields,
+                    margin: '3 0 0 10'
                 },{
                     ptype: 'rallygridboardcustomfiltercontrol',
                     filterControlConfig: {
                         modelNames: modelNames,
                        // margin:  '0 10 0 0',
                         stateful: true,
-                        stateId: this.getContext().getScopedStateId('portfolio-grid-filter-1')
+                        stateId: this.getContext().getScopedStateId('portfolio-grid-filter-2')
                     },
                     showOwnerFilter: true,
                     ownerFilterControlConfig: {
                        stateful: true,
+                       stateId: this.getContext().getScopedStateId('portfolio-owner-filter-2')
                        //margin:  '0 10 0 0',
-                       stateId: this.getContext().getScopedStateId('portfolio-owner-filter-1')
                     }
                 },{
                 ptype: 'rallygridboardactionsmenu',
@@ -304,12 +311,15 @@ Ext.define("portfolio-item-grid", {
 
             ],
             storeConfig: {
-                filters: this.getPermanentFilters()
+                filters: filters
             },
             gridConfig: {
                // allColumnsStateful: true,
+                stateful: true,
+                stateId: this.getContext().getScopedStateId('portfolio-grid-grid-2'),
+                state: ['columnschanged','viewready','reconfigure'],
                 store: store,
-                columnCfgs: this.getSetting('columns'),
+                columnCfgs: columns,
                 height: this.getHeight()
             }
         });
@@ -320,6 +330,24 @@ Ext.define("portfolio-item-grid", {
             gridboard.getHeader().hide();
         }
     },
+    
+    _getAlwaysSelectedFields: function() {
+        var setting = this.getSetting('columnNames') ;
+        
+        if ( Ext.isEmpty(setting) ) {
+            return [];
+        }
+        
+        if ( Ext.isString(setting) ) {
+            return setting.split(',');
+        }
+        return setting;
+    },
+
+    _getColumns: function() {
+        return this._getAlwaysSelectedFields();
+    },
+    
     _shouldEnableAddNew: function() {
         return !_.contains(this.disallowedAddNewTypes, this.getSetting('type').toLowerCase());
     },

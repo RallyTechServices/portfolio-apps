@@ -37,41 +37,41 @@ Ext.define('portfolio-item-selector', {
         return null;
     },
     applyState: function(state) {
-        if (!Ext.isEmpty(state) && !Ext.Object.isEmpty(state)){
-            var ref = Ext.create('Rally.util.Ref',state.portfolioItemRef),
-                type = ref.getType();
-
-            //don't apply the state if the type doesn't match.
-            if (this.type && this.type.toLowerCase() !== type.toLowerCase()){
-                this._updatePortfolioItem(null);
-                return;
-            }
-
-            Rally.data.ModelFactory.getModel({
-                type: type,
-                scope: this,
-                success: function(model) {
-                    model.load(ref.getOid(),{
-                        scope: this,
-                        callback: function(result, operation){
-                            if (result && operation.wasSuccessful()){
-                                this._updatePortfolioItem(result);
-                            } else {
-                                this._updatePortfolioItem(null);
-                                Rally.ui.notify.Notifier.showError({message: 'Could not load state for item [' + state + ']: ' + operation.error && operation.error.errors.join(',')});
-                            }
-
-                        }
-                    });
-                },
-                failure: function(){
-                    this._updatePortfolioItem(null);
-                    Rally.ui.notify.Notifier.showError({message: 'Could not load state for item [' + state + ']'});
-                }
-            });
-        } else {
-            this._updatePortfolioItem(null);
-        }
+//        if (!Ext.isEmpty(state) && !Ext.Object.isEmpty(state)){
+//            var ref = Ext.create('Rally.util.Ref',state.portfolioItemRef),
+//                type = ref.getType();
+//
+//            //don't apply the state if the type doesn't match.
+//            if (this.type && this.type.toLowerCase() !== type.toLowerCase()){
+//                this._updatePortfolioItem(null);
+//                return;
+//            }
+//
+//            Rally.data.ModelFactory.getModel({
+//                type: type,
+//                scope: this,
+//                success: function(model) {
+//                    model.load(ref.getOid(),{
+//                        scope: this,
+//                        callback: function(result, operation){
+//                            if (result && operation.wasSuccessful()){
+//                                this._updatePortfolioItem(result);
+//                            } else {
+//                                this._updatePortfolioItem(null);
+//                                Rally.ui.notify.Notifier.showError({message: 'Could not load state for item [' + state + ']: ' + operation.error && operation.error.errors.join(',')});
+//                            }
+//
+//                        }
+//                    });
+//                },
+//                failure: function(){
+//                    this._updatePortfolioItem(null);
+//                    Rally.ui.notify.Notifier.showError({message: 'Could not load state for item [' + state + ']'});
+//                }
+//            });
+//        } else {
+//            this._updatePortfolioItem(null);
+//        }
     },
     _updatePortfolioItem: function(){
         var cb = this.down('#cb-portfolioitem');
@@ -88,7 +88,7 @@ Ext.define('portfolio-item-selector', {
     },
     _addSelector : function()
     {
-         this.removeAll();
+        this.removeAll();
         if (!this.type){
             this.add({
                 xtype: 'container',
@@ -104,28 +104,37 @@ Ext.define('portfolio-item-selector', {
                     remoteFilter: false,
                     autoLoad: true
                 },
+                allowNoEntry: true,
+                noEntryText: '',
+                noEntryValue: 0,
                 itemId: 'cb-portfolioitem',
                 margin: 10,
                 valueField: 'ObjectID',
                 displayField: 'FormattedID',
                 width: 600,
                 listConfig: {
-                    itemTpl: '{FormattedID}: {Name}'
+                    itemTpl: '<tpl if="ObjectID &gt; 0">{FormattedID}: {Name}</tpl>'
                 },
-                filterProperties: ['Name','FormattedID'],
+                filterProperties: ['Name','FormattedID','ObjectID'],
                 fieldCls: 'pi-selector',
                 displayTpl: '<tpl for=".">' +
+                '<tpl if="ObjectID &gt; 0 ">' +
                 '{[values["FormattedID"]]}: {[values["Name"]]}' +
+                '</tpl>' +
                 '<tpl if="xindex < xcount">,</tpl>' +
                 '</tpl>'
             });
-            cb.on('ready', this._updatePortfolioItem, this);
+            //cb.on('ready', this._updatePortfolioItem, this);
+            cb.on('change', this._updateGoButton, this);
+            
             this.add(cb);
 
             this.add({
                 xtype: 'rallybutton',
                 text: this.buttonText,
+                itemId: 'cb-go-button',
                 cls: 'rly-small primary',
+                disabled: true,
                 margin: 10,
                 listeners: {
                     scope: this,
@@ -134,6 +143,15 @@ Ext.define('portfolio-item-selector', {
             });
         }
     },
+    
+    _updateGoButton: function(cb) {
+        if ( !Ext.isEmpty(cb.getValue()) && cb.getValue() > 0 ) {
+            this.down('#cb-go-button').setDisabled(false);
+        } else {
+            this.down('#cb-go-button').setDisabled(true);
+        }
+    },
+    
     _requestPorfolioItem : function() {
         this.publish('portfolioItemSelected', this.portfolioItem || null);
     }
