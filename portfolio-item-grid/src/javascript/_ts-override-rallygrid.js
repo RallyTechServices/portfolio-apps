@@ -10,27 +10,30 @@ Ext.override(Rally.ui.grid.TreeGrid,{
             if (state.columns) {
                 
                 // state columns might be objects, and column configs be an array of strings
-                var cfg_by_index = {};
-                Ext.Array.each(state.columns, function(column){
+                var state_column_names =  Ext.Array.map(state.columns, function(column){
                     if ( Ext.isObject(column) ) {
-                        cfg_by_index[column.dataIndex] = column;
+                        return column.dataIndex;
                     }
+                    return column;
                 });
                 
                 // for columns passed in, use state-saved version if available
-                var cfgs = Ext.Array.map(this.columnCfgs, function(col) {
-                    if ( !Ext.isEmpty(cfg_by_index[col]) ) {
-                        return cfg_by_index[col];
+                
+                var unused_cfgs = Ext.Array.filter(this.columnCfgs, function(column){
+                    
+                    if ( Ext.isObject(column) ) {
+                        var data_index = column.dataIndex;
+                        if ( data_index == 'FormattedID' ) { return false; }
+                        
+                        return ! Ext.Array.contains(state_column_names, data_index);
                     }
-                    return col;
+                    
+                    if ( column == 'FormattedID' ) { return false; }
+                    return ! Ext.Array.contains(state_column_names, column);
                 });
                 
-                // put any state saved ones that weren't passed in at the end
-                this.columnCfgs = Ext.Array.filter( 
-                    Ext.Array.merge(cfgs, state.columns),
-                    function(col) {
-                        return ( col != 'FormattedID' );
-                });
+                // put unused ones at the end
+                this.columnCfgs = Ext.Array.merge(state.columns, unused_cfgs);
             }
 
             if (state.sorters && this.storeConfig ) {
