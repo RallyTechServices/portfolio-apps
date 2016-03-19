@@ -100,6 +100,7 @@
                     name: 'columnNames',
                     autoExpand: true,
                     modelTypes: ['HierarchicalRequirement'],
+                    alwaysSelectedValues: ['FormattedID','DragAndDropRank','Rank'],
                     handlesEvents: {
                         typeselected: function(cb){
                             this.refreshWithNewModelTypes([cb]);
