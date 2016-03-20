@@ -23,7 +23,6 @@
         ],
 
         getFields: function (context, settings) {
-            console.log('settings', settings);
             var type_filters = Rally.data.wsapi.Filter.or([
                 {property: 'TypePath', value: 'HierarchicalRequirement'},
                 {property: 'TypePath', operator: 'contains', value: 'PortfolioItem/'}
@@ -100,6 +99,7 @@
                     name: 'columnNames',
                     autoExpand: true,
                     modelTypes: ['HierarchicalRequirement'],
+                    alwaysSelectedValues: ['FormattedID','DragAndDropRank','Rank'],
                     handlesEvents: {
                         typeselected: function(cb){
                             this.refreshWithNewModelTypes([cb]);

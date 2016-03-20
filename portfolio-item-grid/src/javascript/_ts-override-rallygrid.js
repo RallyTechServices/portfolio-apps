@@ -20,15 +20,19 @@ Ext.override(Rally.ui.grid.TreeGrid,{
                 // for columns passed in, use state-saved version if available
                 
                 var unused_cfgs = Ext.Array.filter(this.columnCfgs, function(column){
+                    var ignore_column_names = ['FormattedID','Rank','DragAndDropRank','Name'];
                     
                     if ( Ext.isObject(column) ) {
-                        var data_index = column.dataIndex;
-                        if ( data_index == 'FormattedID' ) { return false; }
+                        if ( Ext.Array.contains(ignore_column_names, column.dataIndex)) {
+                            return false;
+                        }
                         
-                        return ! Ext.Array.contains(state_column_names, data_index);
+                        return ! Ext.Array.contains(state_column_names, column.dataIndex);
                     }
                     
-                    if ( column == 'FormattedID' ) { return false; }
+                    if ( Ext.Array.contains(ignore_column_names, column)){
+                        return false;
+                    }
                     return ! Ext.Array.contains(state_column_names, column);
                 });
                 

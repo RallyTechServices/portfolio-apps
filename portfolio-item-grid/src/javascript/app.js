@@ -259,17 +259,12 @@ Ext.define("portfolio-item-grid", {
             columns = this._getColumns(),
             filters = this.getPermanentFilters(),
             alwaysSelectedFields = this._getAlwaysSelectedFields();
-            
-        this.logger.log('addGridBoard', store, modelNames, alwaysSelectedFields, columns, filters.toString());
-        
+                
         var gridboard = Ext.create('Rally.ui.gridboard.GridBoard', {
             itemId: 'gridboard',
             toggleState: 'grid',
             modelNames: modelNames,
             context: this.getContext(),
-//            stateful: true,
-//            stateId: this.getContext().getScopedStateId('portfolio-grid-2'),
-//            states: ['load'],
             plugins:  [{
                 ptype: 'rallygridboardaddnew'
                 },{
@@ -282,7 +277,6 @@ Ext.define("portfolio-item-grid", {
                     ptype: 'rallygridboardcustomfiltercontrol',
                     filterControlConfig: {
                         modelNames: modelNames,
-                       // margin:  '0 10 0 0',
                         stateful: true,
                         stateId: this.getContext().getScopedStateId('portfolio-grid-filter-2')
                     },
@@ -290,24 +284,23 @@ Ext.define("portfolio-item-grid", {
                     ownerFilterControlConfig: {
                        stateful: true,
                        stateId: this.getContext().getScopedStateId('portfolio-owner-filter-2')
-                       //margin:  '0 10 0 0',
                     }
                 },{
-                ptype: 'rallygridboardactionsmenu',
-                menuItems: [
-                    {
-                        text: 'Export...',
-                        handler: function() {
-                            window.location = Rally.ui.grid.GridCsvExport.buildCsvExportUrl(
-                                this.down('rallygridboard').getGridOrBoard());
-                        },
-                        scope: this
+                    ptype: 'rallygridboardactionsmenu',
+                    menuItems: [
+                        {
+                            text: 'Export...',
+                            handler: function() {
+                                window.location = Rally.ui.grid.GridCsvExport.buildCsvExportUrl(
+                                    this.down('rallygridboard').getGridOrBoard());
+                            },
+                            scope: this
+                        }
+                    ],
+                    buttonConfig: {
+                        iconCls: 'icon-export'
                     }
-                ],
-                buttonConfig: {
-                    iconCls: 'icon-export'
                 }
-            }
 
             ],
             storeConfig: {
@@ -319,7 +312,7 @@ Ext.define("portfolio-item-grid", {
                 stateId: this.getContext().getScopedStateId('portfolio-grid-grid-2'),
                 state: ['columnschanged','viewready','reconfigure'],
                 store: store,
-                columnCfgs: columns,
+                columnCfgs: this._getColumns(),
                 height: this.getHeight()
             }
         });
@@ -332,16 +325,21 @@ Ext.define("portfolio-item-grid", {
     },
     
     _getAlwaysSelectedFields: function() {
-        var setting = this.getSetting('columnNames') ;
+        var columns = this.getSetting('columnNames') ;
         
-        if ( Ext.isEmpty(setting) ) {
+        if ( Ext.isEmpty(columns) ) {
             return [];
         }
         
-        if ( Ext.isString(setting) ) {
-            return setting.split(',');
+        if ( Ext.isString(columns) ) {
+            return columns.split(',');
         }
-        return setting;
+        
+        columns = Ext.Array.filter( columns, function(column){
+            return ( column != 'FormattedID' );
+        });
+        
+        return Ext.Array.unique( columns );
     },
 
     _getColumns: function() {
