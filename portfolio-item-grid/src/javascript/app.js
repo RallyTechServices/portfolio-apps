@@ -259,9 +259,7 @@ Ext.define("portfolio-item-grid", {
             columns = this._getColumns(),
             filters = this.getPermanentFilters(),
             alwaysSelectedFields = this._getAlwaysSelectedFields();
-        
-        console.log('alwaysSelectedFields',alwaysSelectedFields);
-        
+                
         var gridboard = Ext.create('Rally.ui.gridboard.GridBoard', {
             itemId: 'gridboard',
             toggleState: 'grid',

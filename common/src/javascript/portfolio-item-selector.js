@@ -13,6 +13,7 @@ Ext.define('portfolio-item-selector', {
 
     type: null,
     buttonText: 'Go',
+    buttonPushed: false,
 
     constructor : function(config)
     {
@@ -74,12 +75,15 @@ Ext.define('portfolio-item-selector', {
 //        }
     },
     _updatePortfolioItem: function(){
+        this.buttonPushed = true;
         var cb = this.down('#cb-portfolioitem');
+        
         if (cb){
             var portfolioItem = cb.getRecord();
             this.portfolioItem = portfolioItem;
             this.fireEvent('change', portfolioItem);
             this.publish('portfolioItemSelected', portfolioItem);
+
             if (this.stateful && this.stateId){
                 this.saveState();
             }
@@ -153,6 +157,13 @@ Ext.define('portfolio-item-selector', {
     },
     
     _requestPorfolioItem : function() {
-        this.publish('portfolioItemSelected', this.portfolioItem || null);
+        // only publish if the go button has been pushed
+        if ( this.buttonPushed ) {
+            this.publish('portfolioItemSelected', this.portfolioItem || null);
+            return;
+        }
+        
+        console.log("Requested PI, but the user hasn't pushed the Go button");
+        
     }
 });

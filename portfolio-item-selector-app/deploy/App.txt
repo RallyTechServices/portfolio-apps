@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Selector</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Mar 07 2016 17:44:22 GMT-0800 (PST) -->
+    <!--  Build Date: Sat Mar 19 2016 17:16:46 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Mar 07 2016 17:44:22 GMT-0800 (PST)";
-        var CHECKSUM = 11940306309;
+        var APP_BUILD_DATE = "Sat Mar 19 2016 17:16:46 GMT-0700 (PDT)";
+        var CHECKSUM = 12203431994;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -148,6 +148,7 @@ Ext.define('portfolio-item-selector', {
 
     type: null,
     buttonText: 'Go',
+    buttonPushed: false,
 
     constructor : function(config)
     {
@@ -209,12 +210,15 @@ Ext.define('portfolio-item-selector', {
 //        }
     },
     _updatePortfolioItem: function(){
+        this.buttonPushed = true;
         var cb = this.down('#cb-portfolioitem');
+        
         if (cb){
             var portfolioItem = cb.getRecord();
             this.portfolioItem = portfolioItem;
             this.fireEvent('change', portfolioItem);
             this.publish('portfolioItemSelected', portfolioItem);
+
             if (this.stateful && this.stateId){
                 this.saveState();
             }
@@ -288,7 +292,14 @@ Ext.define('portfolio-item-selector', {
     },
     
     _requestPorfolioItem : function() {
-        this.publish('portfolioItemSelected', this.portfolioItem || null);
+        // only publish if the go button has been pushed
+        if ( this.buttonPushed ) {
+            this.publish('portfolioItemSelected', this.portfolioItem || null);
+            return;
+        }
+        
+        console.log("Requested PI, but the user hasn't pushed the Go button");
+        
     }
 });
 Ext.define('Rally.technicalservices.WsapiToolbox', {

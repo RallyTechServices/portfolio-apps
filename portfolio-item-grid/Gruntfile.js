@@ -354,7 +354,7 @@ module.exports = function(grunt) {
     grunt.registerTask('test-fast', "Run tests that don't need to connect to Rally", ['jasmine:fast']);
     grunt.registerTask('test-slow', "Run tests that need to connect to Rally", ['jasmine:slow']);
 
-    grunt.registerTask('deploy', 'Build and deploy app to the location in auth.json',['build','install']);
+    grunt.registerTask('deploy', 'Build and deploy app to the location in auth.json',['build','ugly','install']);
 
     
 };

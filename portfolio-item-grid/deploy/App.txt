@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Picker</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Sat Mar 19 2016 16:39:06 GMT-0700 (PDT) -->
+    <!--  Build Date: Sat Mar 19 2016 16:51:49 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Sat Mar 19 2016 16:39:06 GMT-0700 (PDT)";
-        var CHECKSUM = 33677180952;
+        var APP_BUILD_DATE = "Sat Mar 19 2016 16:51:49 GMT-0700 (PDT)";
+        var CHECKSUM = 33902156940;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -492,9 +492,7 @@ Ext.define("portfolio-item-grid", {
             columns = this._getColumns(),
             filters = this.getPermanentFilters(),
             alwaysSelectedFields = this._getAlwaysSelectedFields();
-        
-        console.log('alwaysSelectedFields',alwaysSelectedFields);
-        
+                
         var gridboard = Ext.create('Rally.ui.gridboard.GridBoard', {
             itemId: 'gridboard',
             toggleState: 'grid',
@@ -615,7 +613,6 @@ Ext.define("portfolio-item-grid", {
         ],
 
         getFields: function (context, settings) {
-            console.log('settings', settings);
             var type_filters = Rally.data.wsapi.Filter.or([
                 {property: 'TypePath', value: 'HierarchicalRequirement'},
                 {property: 'TypePath', operator: 'contains', value: 'PortfolioItem/'}
@@ -844,6 +841,7 @@ Ext.define('portfolio-item-selector', {
 
     type: null,
     buttonText: 'Go',
+    buttonPushed: false,
 
     constructor : function(config)
     {
@@ -905,6 +903,7 @@ Ext.define('portfolio-item-selector', {
 //        }
     },
     _updatePortfolioItem: function(){
+        this.buttonPushed = true;
         var cb = this.down('#cb-portfolioitem');
         if (cb){
             var portfolioItem = cb.getRecord();
@@ -984,7 +983,14 @@ Ext.define('portfolio-item-selector', {
     },
     
     _requestPorfolioItem : function() {
-        this.publish('portfolioItemSelected', this.portfolioItem || null);
+        // only publish if the go button has been pushed
+        if ( this.buttonPushed ) {
+            this.publish('portfolioItemSelected', this.portfolioItem || null);
+            return;
+        }
+        
+        console.log("Requested PI, but the user hasn't pushed the Go button");
+        
     }
 });
 Ext.define('Rally.technicalservices.WsapiToolbox', {
