@@ -257,21 +257,31 @@ Ext.define("portfolio-item-grid", {
         var modelNames =  _.clone(this.modelNames),
             context = this.getContext(),
             columns = this._getColumns(),
-            filters = this.getPermanentFilters(),
-            alwaysSelectedFields = this._getAlwaysSelectedFields();
+            filters = this.getPermanentFilters();
                 
         var gridboard = Ext.create('Rally.ui.gridboard.GridBoard', {
             itemId: 'gridboard',
             toggleState: 'grid',
             modelNames: modelNames,
             context: this.getContext(),
-            plugins:  [{
-                ptype: 'rallygridboardaddnew'
-                },{
+            plugins:  [
+                { 
+                    ptype: 'rallygridboardaddnew' 
+                },
+                {
                     ptype: 'rallygridboardfieldpicker',
                     headerPosition: 'left',
                     modelNames: modelNames,
-                    gridAlwaysSelectedValues: alwaysSelectedFields,
+                    stateful: false,
+                    popoverConfig: {
+                        height: 250
+                    },
+                    fieldPickerConfig: { 
+                        pickerCfg: {
+                            height: 150
+                        } 
+                    },
+                    gridAlwaysSelectedValues: this._getAlwaysSelectedFields(),
                     margin: '3 0 0 10'
                 },{
                     ptype: 'rallygridboardcustomfiltercontrol',
@@ -326,7 +336,7 @@ Ext.define("portfolio-item-grid", {
     
     _getAlwaysSelectedFields: function() {
         var columns = this.getSetting('columnNames') ;
-        
+                
         if ( Ext.isEmpty(columns) ) {
             return [];
         }

@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Picker</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Sat Mar 19 2016 16:51:49 GMT-0700 (PDT) -->
+    <!--  Build Date: Thu Mar 31 2016 21:33:41 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Sat Mar 19 2016 16:51:49 GMT-0700 (PDT)";
-        var CHECKSUM = 33902156940;
+        var APP_BUILD_DATE = "Thu Mar 31 2016 21:33:41 GMT-0700 (PDT)";
+        var CHECKSUM = 42250094429;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -176,6 +176,78 @@ Ext.define('Rally.technicalservices.Logger',{
 
 });
 
+Ext.override(Rally.ui.gridboard.plugin.GridBoardFieldPicker,{
+    
+    // add ability to override the properties of the popover, mostly so we can do height
+    _getPopoverConfig: function() {
+        return this.popoverConfig || {};
+    },
+    
+    
+    _createPopover: function(popoverTarget) {
+        this.popover = Ext.create('Rally.ui.popover.Popover', 
+            _.extend({
+                target: popoverTarget,
+                placement: ['bottom', 'left', 'top', 'right'],
+                cls: 'field-picker-popover',
+                toFront: Ext.emptyFn,
+                buttonAlign: 'center',
+                title: this.getTitle(),
+                listeners: {
+                    destroy: function () {
+                        this.popover = null;
+                    },
+                    scope: this
+                },
+                buttons: [
+                    {
+                        xtype: "rallybutton",
+                        text: 'Apply',
+                        cls: 'field-picker-apply-btn primary rly-small',
+                        listeners: {
+                            click: function() {
+                                this._onApply(this.popover);
+                            },
+                            scope: this
+                        }
+                    },
+                    {
+                        xtype: "rallybutton",
+                        text: 'Cancel',
+                        cls: 'field-picker-cancel-btn secondary dark rly-small',
+                        listeners: {
+                            click: function() {
+                                this.popover.close();
+                            },
+                            scope: this
+                        }
+                    }
+                ],
+                items: [
+                    _.extend({
+                        xtype: 'rallyfieldpicker',
+                        cls: 'field-picker',
+                        itemId: 'fieldpicker',
+                        modelTypes: this._getModelTypes(),
+                        alwaysExpanded: true,
+                        width: 200,
+                        placeholderText: 'Search',
+                        selectedTextLabel: 'Selected',
+                        availableTextLabel: 'Available',
+                        listeners: {
+                            specialkey: function(field, e) {
+                                if (e.getKey() === e.ESC) {
+                                    this.popover.close();
+                                }
+                            },
+                            scope: this
+                        }
+                    }, this._getPickerConfig())
+                ]
+            }, this._getPopoverConfig())
+        );
+    }
+});
 Ext.override(Rally.ui.grid.TreeGrid,{
 
     /* 
@@ -490,21 +562,31 @@ Ext.define("portfolio-item-grid", {
         var modelNames =  _.clone(this.modelNames),
             context = this.getContext(),
             columns = this._getColumns(),
-            filters = this.getPermanentFilters(),
-            alwaysSelectedFields = this._getAlwaysSelectedFields();
+            filters = this.getPermanentFilters();
                 
         var gridboard = Ext.create('Rally.ui.gridboard.GridBoard', {
             itemId: 'gridboard',
             toggleState: 'grid',
             modelNames: modelNames,
             context: this.getContext(),
-            plugins:  [{
-                ptype: 'rallygridboardaddnew'
-                },{
+            plugins:  [
+                { 
+                    ptype: 'rallygridboardaddnew' 
+                },
+                {
                     ptype: 'rallygridboardfieldpicker',
                     headerPosition: 'left',
                     modelNames: modelNames,
-                    gridAlwaysSelectedValues: alwaysSelectedFields,
+                    stateful: false,
+                    popoverConfig: {
+                        height: 250
+                    },
+                    fieldPickerConfig: { 
+                        pickerCfg: {
+                            height: 150
+                        } 
+                    },
+                    gridAlwaysSelectedValues: this._getAlwaysSelectedFields(),
                     margin: '3 0 0 10'
                 },{
                     ptype: 'rallygridboardcustomfiltercontrol',
@@ -559,7 +641,7 @@ Ext.define("portfolio-item-grid", {
     
     _getAlwaysSelectedFields: function() {
         var columns = this.getSetting('columnNames') ;
-        
+                
         if ( Ext.isEmpty(columns) ) {
             return [];
         }
@@ -689,7 +771,7 @@ Ext.define("portfolio-item-grid", {
                     name: 'columnNames',
                     autoExpand: true,
                     modelTypes: ['HierarchicalRequirement'],
-                    alwaysSelectedValues: ['FormattedID','DragAndDropRank','Rank'],
+                    alwaysSelectedValues: ['FormattedID','DragAndDropRank','Rank','Name'],
                     handlesEvents: {
                         typeselected: function(cb){
                             this.refreshWithNewModelTypes([cb]);
@@ -708,6 +790,120 @@ Ext.define("portfolio-item-grid", {
         }
     });
 })();
+Ext.override(Rally.ui.filter.CustomFilterRow, {
+    _getItems: function() {
+        var items = [
+            {
+                xtype: 'rallycombobox',
+                itemId: 'fieldCombobox',
+                disabled: true,
+                autoLoad: false,
+                defaultSelectionPosition: null,
+                store: Ext.create('Ext.data.Store', {
+                    fields: ['attributeDefinition', 'displayName', 'modelNames', 'name']
+                }),
+                displayField: 'displayName',
+                emptyText: 'Choose Field...',
+                valueField: 'name',
+                matchFieldWidth: true,
+                listeners: {
+                    select: this._onFieldSelect,
+                    afterrender: this._onFieldAfterRender,
+                    expand: this._onFieldExpand,
+                    scope: this
+                },
+                width: this.boxWidths.field,
+                filterProperties: ['displayName'],
+                listConfig: {
+                    itemTpl: new Ext.XTemplate('' +
+                        '{displayName}',
+                        '<tpl if="this.hasModelNames(values)">',
+                            '<div class="duplicate-field-model-name">- {modelNames}</div>',
+                        '</tpl>',
+                        {
+                            hasModelNames: function (data) {
+                                return data.modelNames.length > 0;
+                            }
+                        })
+                }
+            },
+            {
+                xtype: 'rallycombobox',
+                itemId: 'operatorCombobox',
+                disabled: true,
+                autoLoad: false,
+                editable: false,
+                forceSelection: true,
+                store: Ext.create('Ext.data.Store', {
+                    fields: ['name', 'displayName'],
+                    listeners: {
+                        datachanged: this._onOperatorDataChanged,
+                        scope: this
+                    }
+                }),
+                displayField: 'displayName',
+                valueField: 'name',
+                matchFieldWidth: true,
+                listeners: {
+                    setvalue: this._onOperatorSetValue,
+                    scope: this
+                },
+                width: this.boxWidths.operator
+            }
+        ];
+
+        if (!this._hasInitialData()) {
+            items.push({
+                xtype: 'rallytextfield',
+                itemId: 'valueField',
+                disabled: true,
+                height: 22,
+                width: this.boxWidths.value
+            });
+        }
+        return items;
+    }
+
+});
+
+Ext.override(Rally.ui.filter.CustomFilterPanel,{
+    _getItems: function() {
+        return [
+            {
+                xtype: 'container',
+                cls: 'custom-filter-header',
+                layout: 'column',
+                defaults: {
+                    xtype: 'component',
+                    cls: 'filter-panel-label'
+                },
+                items: [
+                    {
+                        height: 1,
+                        width: 30
+                    },
+                    // CHANGED these values to make headers line up
+                    {
+                        html: 'Field',
+                        width: this.boxWidths.field + 5 || 135
+                    },
+                    {
+                        html: 'Operator',
+                        width: this.boxWidths.operator + 5|| 140
+                    },
+                    {
+                        html: 'Value',
+                        width: this.boxWidths.value + 5 || 155
+                    }
+                ]
+            },
+            {
+                xtype: 'container',
+                itemId: 'customFilterRows'
+            }
+        ];
+    }
+});
 Ext.define('Rally.technicalservices.DashboardSettings',{
     selectedType: undefined,
 
@@ -716,9 +912,14 @@ Ext.define('Rally.technicalservices.DashboardSettings',{
 Ext.override(Ext.util.Filter,{
     createFilterFn: function() {
         var me       = this,
-            matcher  = me.createValueMatcher(),
-            property = !Ext.isArray(me.property) ? me.property.split(',') : me.property
-
+            matcher  = me.createValueMatcher();
+        
+        var property = me.property;
+        
+        if ( !Ext.isArray(me.property) && /,/.test(me.property) ) {
+            property = me.property.split(',');
+        }
+        
         return function(item) {
             var hasmatch = false;
             for(var i=0;i<property.length;i++) {
@@ -905,11 +1106,13 @@ Ext.define('portfolio-item-selector', {
     _updatePortfolioItem: function(){
         this.buttonPushed = true;
         var cb = this.down('#cb-portfolioitem');
+        
         if (cb){
             var portfolioItem = cb.getRecord();
             this.portfolioItem = portfolioItem;
             this.fireEvent('change', portfolioItem);
             this.publish('portfolioItemSelected', portfolioItem);
+
             if (this.stateful && this.stateId){
                 this.saveState();
             }
@@ -932,7 +1135,8 @@ Ext.define('portfolio-item-selector', {
                     model: this.type,
                     fetch: ['FormattedID','ObjectID','Name'],
                     remoteFilter: false,
-                    autoLoad: true
+                    autoLoad: true,
+                    limit: Infinity
                 },
                 allowNoEntry: true,
                 noEntryText: '',
