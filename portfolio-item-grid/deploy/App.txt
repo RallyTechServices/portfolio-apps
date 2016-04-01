@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Picker</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Sat Mar 19 2016 16:51:49 GMT-0700 (PDT) -->
+    <!--  Build Date: Thu Mar 31 2016 19:45:12 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Sat Mar 19 2016 16:51:49 GMT-0700 (PDT)";
-        var CHECKSUM = 33902156940;
+        var APP_BUILD_DATE = "Thu Mar 31 2016 19:45:12 GMT-0700 (PDT)";
+        var CHECKSUM = 33941158680;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -905,11 +905,13 @@ Ext.define('portfolio-item-selector', {
     _updatePortfolioItem: function(){
         this.buttonPushed = true;
         var cb = this.down('#cb-portfolioitem');
+        
         if (cb){
             var portfolioItem = cb.getRecord();
             this.portfolioItem = portfolioItem;
             this.fireEvent('change', portfolioItem);
             this.publish('portfolioItemSelected', portfolioItem);
+
             if (this.stateful && this.stateId){
                 this.saveState();
             }
@@ -932,7 +934,8 @@ Ext.define('portfolio-item-selector', {
                     model: this.type,
                     fetch: ['FormattedID','ObjectID','Name'],
                     remoteFilter: false,
-                    autoLoad: true
+                    autoLoad: true,
+                    limit: Infinity
                 },
                 allowNoEntry: true,
                 noEntryText: '',

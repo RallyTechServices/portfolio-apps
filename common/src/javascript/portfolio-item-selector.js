@@ -106,7 +106,8 @@ Ext.define('portfolio-item-selector', {
                     model: this.type,
                     fetch: ['FormattedID','ObjectID','Name'],
                     remoteFilter: false,
-                    autoLoad: true
+                    autoLoad: true,
+                    limit: Infinity
                 },
                 allowNoEntry: true,
                 noEntryText: '',
