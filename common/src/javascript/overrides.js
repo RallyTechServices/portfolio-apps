@@ -1,9 +1,14 @@
 Ext.override(Ext.util.Filter,{
     createFilterFn: function() {
         var me       = this,
-            matcher  = me.createValueMatcher(),
-            property = !Ext.isArray(me.property) ? me.property.split(',') : me.property
-
+            matcher  = me.createValueMatcher();
+        
+        var property = me.property;
+        
+        if ( !Ext.isArray(me.property) && /,/.test(me.property) ) {
+            property = me.property.split(',');
+        }
+        
         return function(item) {
             var hasmatch = false;
             for(var i=0;i<property.length;i++) {
