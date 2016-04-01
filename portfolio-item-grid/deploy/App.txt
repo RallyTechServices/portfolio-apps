@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Item Picker</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Thu Mar 31 2016 21:01:48 GMT-0700 (PDT) -->
+    <!--  Build Date: Thu Mar 31 2016 21:26:20 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu Mar 31 2016 21:01:48 GMT-0700 (PDT)";
-        var CHECKSUM = 37316023645;
+        var APP_BUILD_DATE = "Thu Mar 31 2016 21:26:20 GMT-0700 (PDT)";
+        var CHECKSUM = 38449576167;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -790,6 +790,43 @@ Ext.define("portfolio-item-grid", {
         }
     });
 })();
+Ext.override(Rally.ui.filter.CustomFilterPanel,{
+    _getItems: function() {
+        return [
+            {
+                xtype: 'container',
+                cls: 'custom-filter-header',
+                layout: 'column',
+                defaults: {
+                    xtype: 'component',
+                    cls: 'filter-panel-label'
+                },
+                items: [
+                    {
+                        height: 1,
+                        width: 30
+                    },
+                    {
+                        html: 'Field',
+                        width: this.boxWidths.field + 5 || 135
+                    },
+                    {
+                        html: 'Operator',
+                        width: this.boxWidths.operator + 5|| 140
+                    },
+                    {
+                        html: 'Value',
+                        width: this.boxWidths.value + 5 || 155
+                    }
+                ]
+            },
+            {
+                xtype: 'container',
+                itemId: 'customFilterRows'
+            }
+        ];
+    }
+});
 Ext.define('Rally.technicalservices.DashboardSettings',{
     selectedType: undefined,
 
