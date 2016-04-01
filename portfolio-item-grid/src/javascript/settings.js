@@ -82,8 +82,14 @@
                     displayField: 'DisplayName',
                     valueField: 'TypePath',
                     listeners: {
-                        select: function (combo) {
-                            combo.fireEvent('typeselected', combo.getRecord().get('TypePath'), combo.context);
+                        setvalue: function() {
+                            if ( this.getRecord() ) {
+                                this.fireEvent('typeselected', this.getRecord().get('TypePath'), this.context);
+                            }
+//                        },
+//                        change: function (combo) {
+//                            console.log('changed');
+//                            combo.fireEvent('typeselected', combo.getRecord().get('TypePath'), combo.context);
                         }
                     },
                     bubbleEvents: ['typeselected'],
