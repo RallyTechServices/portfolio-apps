@@ -1,5 +1,5 @@
 {
-    "name": "TS Timeline by Portfolio Field Value",
+    "name": "TS Timeline by Portfolio Item Selector",
     "sdk": "2.0",
-    "className": "TSTimelineByPFV"
+    "className": "TSTimelineByItemSelector"
 }

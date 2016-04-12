@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TS Timeline by Portfolio Field Value</title>
+    <title>TS Timeline by Portfolio Item Selector</title>
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Apr 04 2016 22:59:04 GMT-0700 (PDT)";
+        var APP_BUILD_DATE = "Tue Apr 12 2016 14:23:50 GMT-0700 (PDT)";
     </script>
     
     <script type="text/javascript" src="https://us1.rallydev.com/apps/2.0/sdk-debug.js?apiKey=_PUT_APIKEY_HERE_"></script>
 
     <script type="text/javascript">
         Rally.onReady(function() {
-            Rally.loadScripts(["../pfv-common/src/javascript/dashboard-filter.js","../pfv-common/src/javascript/toolbox.js","src/javascript/utils/Colors.js","src/javascript/utils/__ts-info-link.js","src/javascript/utils/__ts-logger.js","src/javascript/_ts-timeline.js","src/javascript/app.js"],
+            Rally.loadScripts(["../common/src/javascript/_ts-custom-filter-override.js","../common/src/javascript/dashboard-settings.js","../common/src/javascript/overrides.js","../common/src/javascript/portfolio-item-selector.js","../common/src/javascript/toolbox.js","src/javascript/utils/Colors.js","src/javascript/utils/__ts-info-link.js","src/javascript/utils/__ts-logger.js","src/javascript/_ts-timeline.js","src/javascript/app.js","src/javascript/settings.js"],
 	            function() {
-	                Rally.launchApp('TSTimelineByPFV', {
-	                    name: 'TS Timeline by Portfolio Field Value'
+	                Rally.launchApp('TSTimelineByItemSelector', {
+	                    name: 'TS Timeline by Portfolio Item Selector'
 	                })
 	            }, true);
         });

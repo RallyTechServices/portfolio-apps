@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TS Timeline by Portfolio Field Value</title>
+    <title>TS Timeline by Portfolio Item Selector</title>
     <!--  (c) 2015,2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Mon Apr 04 2016 22:59:04 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Apr 12 2016 14:23:51 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Apr 04 2016 22:59:04 GMT-0700 (PDT)";
+        var APP_BUILD_DATE = "Tue Apr 12 2016 14:23:51 GMT-0700 (PDT)";
         var CHECKSUM = [%= checksum %];
     </script>
     
@@ -16,8 +16,8 @@
         Rally.onReady(function() {
             
             
-               Rally.launchApp('TSTimelineByPFV', {
-                   name: 'TS Timeline by Portfolio Field Value'
+               Rally.launchApp('TSTimelineByItemSelector', {
+                   name: 'TS Timeline by Portfolio Item Selector'
                });
         });
     </script>
