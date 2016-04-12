@@ -2,7 +2,7 @@
 
 ## Development Notes
 
-This uses a timeline component.  It would be nice if possible to keep changes to the timeline component over in [its repo])https://github.com/RallyTechServices/ts-components/tree/master/alternative-timeline)
+This uses a timeline component.  It would be nice if possible to keep changes to the timeline component over in [its repo]https://github.com/RallyTechServices/ts-components/tree/master/alternative-timeline)
 
 ### First Load
 

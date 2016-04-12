@@ -3,11 +3,11 @@
 <head>
     <title>TS Timeline by Portfolio Field Value</title>
     <!--  (c) 2015,2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Apr 12 2016 13:15:33 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Apr 12 2016 13:50:44 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Apr 12 2016 13:15:33 GMT-0700 (PDT)";
-        var CHECKSUM = 41180301071;
+        var APP_BUILD_DATE = "Tue Apr 12 2016 13:50:44 GMT-0700 (PDT)";
+        var CHECKSUM = 41699078438;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -879,8 +879,12 @@ Ext.define('CA.technicalservices.AlternativeTimeline',{
         selector_box.add(this._getUpButtonConfig());
         selector_box.add({ xtype:'container', flex: 1 });
         selector_box.add(this._getDownButtonConfig());
-        
-        this.highchart = display_box.add({
+                
+        this.highchart = display_box.add(this._getTimelineConfig());
+    },
+    
+    _getTimelineConfig: function() {
+        var config = {
             xtype: 'rallychart',
             region:'center',
            
@@ -888,7 +892,12 @@ Ext.define('CA.technicalservices.AlternativeTimeline',{
             chartData: this._getChartData(),
             chartColors: Rally.techservices.Colors.getTimelineColors(),
             chartConfig: this._getChartConfig()
-        });
+        };
+        
+        if ( this.height ) { config.height = this.height; }
+        
+        console.log('config', config);
+        return config;
     },
     
     _processItems: function(records) {
@@ -1050,7 +1059,7 @@ Ext.define('CA.technicalservices.AlternativeTimeline',{
      */
     _getChartConfig: function() {
         var me = this;
-        return {
+        var chart_config = {
             chart: {
                 inverted: true,
                 type: 'columnrange',
@@ -1116,6 +1125,8 @@ Ext.define('CA.technicalservices.AlternativeTimeline',{
                 }
             }
         };
+        
+        return chart_config;
     },
     
     _setChart: function(chart) {
