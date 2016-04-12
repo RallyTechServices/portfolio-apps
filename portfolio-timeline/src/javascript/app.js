@@ -1,4 +1,4 @@
-Ext.define("TSTimelineByPFV", {
+Ext.define("TSTimelineByItemSelector", {
     extend: 'Rally.app.App',
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),

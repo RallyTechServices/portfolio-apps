@@ -33,6 +33,10 @@ Ext.define('CA.technicalservices.AlternativeTimeline',{
     _buildChart: function(records) {
         this._processItems(records);
         
+        if ( this.records.length - 1 < this.pageSize) {
+            this.pageSize = this.records.length - 1;
+        }
+        
         var selector_box = this.down('#selector_box');
         
         var display_box  = this.down('#display_box');
@@ -149,11 +153,13 @@ Ext.define('CA.technicalservices.AlternativeTimeline',{
     
     /**
      * Generate x axis categories and y axis series data for the chart
+     * (This chart is sideway, so categories represent the vertical axis)
      */
     _getChartData: function() {
+        
         return {
             categories: this.categories,
-            min: this.pageSize,
+            //min: min,
             series: this.series
         };
     },
@@ -220,6 +226,9 @@ Ext.define('CA.technicalservices.AlternativeTimeline',{
      */
     _getChartConfig: function() {
         var me = this;
+        
+        var max = this.pageSize;
+        
         var chart_config = {
             chart: {
                 inverted: true,
@@ -239,7 +248,7 @@ Ext.define('CA.technicalservices.AlternativeTimeline',{
             xAxis: {
                 min: 0,
                 id: 'xAxis',
-                max: this.pageSize
+                max: max
             },
             yAxis: {
                 id: 'yAxis',
