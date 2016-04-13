@@ -17,26 +17,37 @@ Ext.define("TSTimelineByItemSelector", {
     },
                         
     launch: function() {
-        
-        if ( this.getSetting('showScopeSelector') || this.getSetting('showScopeSelector') == "true" ) {
-            this.headerContainer = this.add({xtype:'container',itemId:'header-ct', layout: {type: 'hbox'}});
-            this.headerContainer.add({
-                xtype: 'portfolioitemselector',
-                context: this.getContext(),
-                type: this.getSetting('selectorType'),
-                stateful: false,
-                stateId: this.getContext().getScopedStateId('app-selector'),
-                width: '75%',
-                listeners: {
-                    change: this.updateWithPI,
-                    scope: this
+        Rally.technicalservices.WsapiToolbox.fetchPortfolioItemTypes().then({
+            success: function(portfolioItemTypes){
+                this.portfolioItemTypes = portfolioItemTypes;
+                                    
+                if ( this.getSetting('showScopeSelector') || this.getSetting('showScopeSelector') == "true" ) {
+                    this.headerContainer = this.add({xtype:'container',itemId:'header-ct', layout: {type: 'hbox'}});
+                    this.headerContainer.add({
+                        xtype: 'portfolioitemselector',
+                        context: this.getContext(),
+                        type: this.getSetting('selectorType'),
+                        stateful: false,
+                        stateId: this.getContext().getScopedStateId('app-selector'),
+                        width: '75%',
+                        listeners: {
+                            change: this.updateWithPI,
+                            scope: this
+                        }
+                    });
+                } else {
+                    // waiting for subscribe
+                    this.subscribe(this, 'portfolioItemSelected', this.updateWithPI, this);
+                    this.publish('requestPortfolioItem', this);
                 }
-            });
-        } else {
-            // waiting for subscribe
-            this.subscribe(this, 'portfolioItemSelected', this.updateWithPI, this);
-            this.publish('requestPortfolioItem', this);
-        }
+            },
+            failure: function(msg){
+                this.logger.log('failed to load Portfolio Item Types', msg);
+                Rally.ui.notify.Notifier.showError({message: msg});
+            },
+            scope: this
+        });
+
     },
     
     _updateData: function() {
@@ -84,18 +95,12 @@ Ext.define("TSTimelineByItemSelector", {
     
     updateWithPI: function(parentPI){
         this.logger.log('updateWithPI', parentPI);
-
         this.model = this.getSetting('type') || 'HierarchicalRequirement';
         
         this.removeAll();
         
-        this.filter = Rally.data.wsapi.Filter.or([
-            {property:'Parent.ObjectID', value:parentPI.get('ObjectID')},
-            {property:'Parent.Parent.ObjectID', value:parentPI.get('ObjectID')},
-            {property:'Parent.Parent.Parent.ObjectID', value:parentPI.get('ObjectID')},
-            {property:'Parent.Parent.Parent.Parent.ObjectID', value:parentPI.get('ObjectID')}
-        ]);
-
+        this.portfolioItem = parentPI;
+        
         this._updateData();
     },
     
@@ -104,12 +109,49 @@ Ext.define("TSTimelineByItemSelector", {
         var setting_query = this.getSetting('query');
         
         if ( Ext.isEmpty( setting_query ) ) {
-            return this.filter;
+            return this._getPortfolioItemFilter();
         }
         
         var query_based_filter = Rally.data.wsapi.Filter.fromQueryString(setting_query);
         
-        return this.filter.and(query_based_filter);
+        return this._getPortfolioItemFilter().and(query_based_filter);
+    },
+    
+    _getPortfolioItemFilter: function(){
+        this.logger.log('_getPortfolioItemFilter', this.portfolioItem)
+
+        if (!this.portfolioItem){
+            return [];
+        }
+        //First verify that the selected portfolio item type is an ancestor to the selected grid type.
+        var pi_types = _.map(this.portfolioItemTypes, function(pi){return pi.typePath.toLowerCase()}),
+            idx = _.indexOf(pi_types, this.portfolioItem.get('_type').toLowerCase()),
+            type_idx = _.indexOf(pi_types, this.getSetting('type').toLowerCase());
+        this.logger.log('_getPortfolioItemFilter', type_idx, idx)
+        if (type_idx < idx) {
+            var properties = [];
+            for (var i = type_idx; i < idx; i++) {
+                if (i < 0) {
+                    properties.push("PortfolioItem");
+                } else {
+                    properties.push('Parent');
+                }
+            }
+            this.logger.log('_getPortfolioItemFilter', properties);
+            return Ext.create('Rally.data.wsapi.Filter', {
+                property: properties.join('.'),
+                value: this.portfolioItem.get('_ref')
+            });
+        } else if (type_idx === idx){
+            return Ext.create('Rally.data.wsapi.Filter', {
+                property: 'ObjectID',
+                value: this.portfolioItem.get('ObjectID')
+            });
+        } else {
+            Rally.ui.notify.Notifier.showError({message: "The selected type for the grid results is an ancestor to the selected portfolio item."});
+            return [{property: 'ObjectID', value: 0}];
+        }
+        return [];
     },
     
     _addTimeline: function(records) {
