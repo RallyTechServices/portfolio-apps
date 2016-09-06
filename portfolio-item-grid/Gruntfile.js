@@ -1,3 +1,6 @@
+// references: https://github.com/request/request#http-authentication
+// https://www.npmjs.com/package/grunt-http 
+
 module.exports = function(grunt) {
     require('grunt');
     
@@ -60,6 +63,12 @@ module.exports = function(grunt) {
                     engine: 'underscore',
                     variables: config
                 },
+                devApiKey: {
+                    src: 'templates/App-debug-apikey-tpl.html',
+                    dest: 'App-debug-apikey.html',
+                    engine: 'underscore',
+                    variables: config
+                },
                 prod: {
                     src: 'templates/App-tpl.html',
                     dest: 'deploy/App.txt',
@@ -84,6 +93,10 @@ module.exports = function(grunt) {
                     engine: 'underscore',
                     variables: config
                 }
+        },
+        watch: {
+            files: ['src/javascript/**/*.js', 'src/style/*.css'],
+            tasks: ['deploy']
         },
         jasmine: {
             fast: {
@@ -138,7 +151,7 @@ module.exports = function(grunt) {
         grunt.file.write(deploy_file,output);
         
     });
-
+    
     grunt.registerTask('install', 'Deploy the app to a rally instance', function() {
         
         if ( ! config.auth ) { 
@@ -334,18 +347,20 @@ module.exports = function(grunt) {
 
         
     });
-    
+
     //load
     grunt.loadNpmTasks('grunt-templater');
     grunt.loadNpmTasks('grunt-contrib-jasmine');
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-watch');
+    
     //tasks
     grunt.registerTask('default', ['debug','build','ugly','apikey']);
     
     // (uses all the files in src/javascript)
     grunt.registerTask('build', "Create the html for deployment",['template:prod','setChecksum']);
     // 
-    grunt.registerTask('debug', "Create an html file that can run in its own tab", ['template:dev']);
+    grunt.registerTask('debug', "Create an html file that can run in its own tab", ['template:dev','template:devApiKey']);
     //
     grunt.registerTask('ugly', "Create the ugly html for deployment",['uglify:ugly','template:ugly']);
     //
@@ -354,7 +369,5 @@ module.exports = function(grunt) {
     grunt.registerTask('test-fast', "Run tests that don't need to connect to Rally", ['jasmine:fast']);
     grunt.registerTask('test-slow', "Run tests that need to connect to Rally", ['jasmine:slow']);
 
-    grunt.registerTask('deploy', 'Build and deploy app to the location in auth.json',['build','ugly','install']);
-
-    
+    grunt.registerTask('deploy', 'Build and deploy app to the location in auth.json',['build','install']);
 };
