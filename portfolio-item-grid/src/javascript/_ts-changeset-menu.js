@@ -73,10 +73,15 @@ Ext.define('CA.techservices.recordmenu.changesetedit', {
         return [{
             xtype: 'rallyrowactioncolumn',
             rowActionsFn: function (record) {
-                console.log(record);
                 return [
                     {
                         xtype: 'tschangesetmenuitemdisconnect',
+                        record: artifact,
+                        changeset: record,
+                        store: me.store
+                    },
+                    {
+                        xtype: 'tschangesetmenuitemreparent',
                         record: artifact,
                         changeset: record,
                         store: me.store

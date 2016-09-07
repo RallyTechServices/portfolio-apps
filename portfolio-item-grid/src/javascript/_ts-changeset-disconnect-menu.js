@@ -15,7 +15,6 @@ Ext.define('CA.techservices.recordmenu.changesetdisconnect', {
     },
     
     _removeFromArtifact: function(changeset,record) {
-        console.log(record, changeset);
         // a hack to get the grid.  must be a better way
         var display_store = this.store;
         
