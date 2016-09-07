@@ -1,3 +1,6 @@
+// references: https://github.com/request/request#http-authentication
+// https://www.npmjs.com/package/grunt-http 
+
 module.exports = function(grunt) {
     require('grunt');
     
@@ -66,12 +69,6 @@ module.exports = function(grunt) {
                     engine: 'underscore',
                     variables: config
                 },
-                apikey: {
-                    src: 'templates/App-apikey-tpl.html',
-                    dest: 'deploy/ExternalApp.txt',
-                    engine: 'underscore',
-                    variables: config
-                },
                 confluence: {
                     src: 'templates/App-confluence-tpl.html',
                     dest: 'deploy/ConfluenceApp.txt',
@@ -84,6 +81,10 @@ module.exports = function(grunt) {
                     engine: 'underscore',
                     variables: config
                 }
+        },
+        watch: {
+            files: ['src/javascript/**/*.js', 'src/style/*.css'],
+            tasks: ['deploy']
         },
         jasmine: {
             fast: {
@@ -138,7 +139,7 @@ module.exports = function(grunt) {
         grunt.file.write(deploy_file,output);
         
     });
-
+    
     grunt.registerTask('install', 'Deploy the app to a rally instance', function() {
         
         if ( ! config.auth ) { 
@@ -334,27 +335,23 @@ module.exports = function(grunt) {
 
         
     });
-    
+
     //load
     grunt.loadNpmTasks('grunt-templater');
     grunt.loadNpmTasks('grunt-contrib-jasmine');
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-watch');
+    
     //tasks
-    grunt.registerTask('default', ['debug','build','ugly','apikey']);
+    grunt.registerTask('default', ['build','ugly']);
     
     // (uses all the files in src/javascript)
     grunt.registerTask('build', "Create the html for deployment",['template:prod','setChecksum']);
     // 
-    grunt.registerTask('debug', "Create an html file that can run in its own tab", ['template:dev']);
-    //
     grunt.registerTask('ugly', "Create the ugly html for deployment",['uglify:ugly','template:ugly']);
     //
-    grunt.registerTask('apikey', "Create an html file that can run on another server", ['template:apikey','template:confluence']);
-
     grunt.registerTask('test-fast', "Run tests that don't need to connect to Rally", ['jasmine:fast']);
     grunt.registerTask('test-slow', "Run tests that need to connect to Rally", ['jasmine:slow']);
 
-    grunt.registerTask('deploy', 'Build and deploy app to the location in auth.json',['build','ugly','install']);
-
-    
+    grunt.registerTask('deploy', 'Build and deploy app to the location in auth.json',['build','install']);
 };

@@ -323,7 +323,21 @@ Ext.define("portfolio-item-grid", {
                 state: ['columnschanged','viewready','reconfigure'],
                 store: store,
                 columnCfgs: this._getColumns(),
-                height: this.getHeight()
+                height: this.getHeight(),
+                rowActionColumnConfig: {
+                    rowActionsFn: function (record) {
+                        return [
+                            {
+                                xtype: 'rallyrecordmenuitemedit',
+                                record: record
+                            },
+                            {
+                                xtype: 'tschangesetmenuitemedit',
+                                record: record
+                            }
+                        ];
+                    }
+                }
             }
         });
 
