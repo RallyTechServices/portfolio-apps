@@ -5,22 +5,15 @@ Ext.define('CArABU.apps.portfolio-apps.PortfolioBurnupCalculator',{
     //     this.mergeConfig(config);
     //     this.callParent(arguments);
     // },
-    // runCalculation: function (snapshots) {
-    //     var calculatorConfig = this._prepareCalculatorConfig(),
-    //         seriesConfig = this._buildSeriesConfig(calculatorConfig);
-    //
-    //     console.log('snaps1',snapshots);
-    //
-    //     var calculator = this.prepareCalculator(calculatorConfig);
-    //     calculator.addSnapshots(snapshots, this._getStartDate(snapshots), this._getEndDate(snapshots));
-    //
-    //     console.log('snaps3',snapshots);
-    //
-    //     var x = this._transformLumenizeDataToHighchartsSeries(calculator, seriesConfig);
-    //     console.log('snapsx',x);
-    //
-    //     return x;
-    // },
+    runCalculation: function (snapshots) {
+        var calculatorConfig = this._prepareCalculatorConfig(),
+            seriesConfig = this._buildSeriesConfig(calculatorConfig);
+
+        var calculator = this.prepareCalculator(calculatorConfig);
+        calculator.addSnapshots(snapshots, this._getStartDate(snapshots), this._getEndDate(snapshots));
+
+        return this._transformLumenizeDataToHighchartsSeries(calculator, seriesConfig);
+    },
     _getTypes: function(){
         var typeHierarchy = [];
         if (this.showStories){
@@ -103,27 +96,24 @@ Ext.define('CArABU.apps.portfolio-apps.PortfolioBurnupCalculator',{
         var now = new Date(),
             endOfDayToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23,59,59,999);
 
-      for(var i =0; i < completedScheduleStateNames.length; i++){
-            var ss = completedScheduleStateNames[i];
-             for(var j =0; j < typeHierarchy.length; j++){
-                var t = typeHierarchy[j]
+      Ext.Array.each(completedScheduleStateNames, function(ss){
+        Ext.Array.each(typeHierarchy, function(t){
+
                 var fieldDisplayName = Ext.String.format("{0} ({1})",ss,t.replace('HierarchicalRequirement','User Story'));
                 metrics.push({
                     "as": fieldDisplayName,
                     "f": function(snapshot, index, metrics, seriesData){
-                      console.log('before point_date', snapshot.tick, endOfDayToday)
+
                         var point_date = Rally.util.DateTime.fromIsoString(snapshot.tick);
-                        console.log('point_date', point_date, endOfDayToday)
                         if (point_date > endOfDayToday){
                             return null;
                         }
-                        console.log('before return point_date', ss + t + "_sum",snapshot)
-                        return snapshot && snapshot[ss + t + "_sum"] || 0;
+                        return snapshot[ss + t + "_sum"];
                     },
                     "display": "column"
                 });
-            }
-        }
+            });
+        });
 
         metrics.push({
               "as": "Planned",
