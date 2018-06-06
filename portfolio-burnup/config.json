@@ -1,0 +1,7 @@
+{
+    "name": "Portfolio Burnup",
+    "sdk": "2.1",
+    "version": "0.1",
+    "className": "CArABU.app.portfolio-apps.PortfolioBurnup",
+    "artifact": "US2609"
+}
