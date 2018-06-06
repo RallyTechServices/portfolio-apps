@@ -1,4 +1,6 @@
-# Portfolio Selection
+# Portfolio Selection Grid
+
+*** THIS APP IS IN PROGRESS June 2018 ***
 
 ## Summary/Description
 
