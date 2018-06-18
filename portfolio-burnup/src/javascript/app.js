@@ -7,79 +7,141 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
     integrationHeaders : {
         name : "CArABU.app.TSApp"
     },
+    featureTypePath: null,
 
     launch: function() {
 
-        this._showEmptyMessage();
-
-        this.subscribe(this,'portfolioitemselected',this._onSelect, this);
+        this.fetchFeatureType().then({
+           success: function(){
+             this._initializeApp();
+             this._showEmptyMessage();
+             this.subscribe(this,'portfolioitemselected',this._onSelect, this);
+           },
+           failure: this._showErrorNotification,
+           scope: this
+        });
 
     },
-    _showEmptyMessage: function(){
-        this.removeAll();
+    clearDisplay: function(){
+       this.down('#displayBox') && this.down('#displayBox').removeAll();
+    },
+    _initializeApp: function(){
+        var cb = this.add({
+            xtype: 'rallycombobox',
+            fieldLabel: 'Chart Units',
+            labelAlign:"right",
+            itemId:"chartUnit",
+            cls: 'ctlLabel',
+            editable:!1,
+            store:Ext.create("Rally.data.custom.Store",{
+              data:[{
+                name: "Points",
+                value: "points"
+              },{
+                name: "Count",
+                value: "count"
+              }],
+              fields:["name","value"]
+            }),
+            value: "points",
+            allowNoEntry:!1,
+            displayField:"name",
+            valueField:"value",
+            stateful:!0,
+            margin:5,
+            stateId:"chart-units"
+        });
+        cb.on('select', this._updateChartUnits, this);
+
         this.add({
            xtype: 'container',
-           html: "Please select a portfolio item from the portfolio selection grid."
+           itemId: 'displayBox'
         });
     },
-    _onSelect: function(portfolioItemData){
-        this.logger.log('_onSelect',portfolioItemData);
-        if (!portfolioItemData){
+    _showEmptyMessage: function(){
+      this._showAppMessage("Please select an item from the grid.");
+    },
+    _showAppMessage: function(msg){
+      this.clearDisplay();
+      this.down('#displayBox').add({
+         xtype: 'container',
+         html: Ext.String.format("<div class='non-error-text'>{0}</div>",msg)
+      });
+    },
+    _showErrorNotification: function(msg){
+      this.clearDisplay();
+      this.down('#displayBox').add({
+         xtype: 'container',
+         html: Ext.String.format("<div class='error-text'>{0}</div>",msg)
+      });
+    },
+    getUsePoints: function(){
+        return this.down('#chartUnit') && this.down('#chartUnit').getValue() == "points" || true;
+    },
+    _updateChartUnits: function(cb){
+        var usePoints = this.getUsePoints();
+        this.logger.log('_updateChartUnits', usePoints);
+    },
+    _onSelect: function(data){
+        this.logger.log('_onSelect',data);
+        if (!data){
             this._showEmptyMessage();
             return;
         }
 
-        var startDate = portfolioItemData.PlannedStartDate || portfolioItemData.ActualStartDate || Rally.util.DateTime.add(new Date(),'month',-3);
-        var endDate = portfolioItemData.PlannedEndDate || portfolioItemData.ActualEndDate || new Date();
+        var startDate = new Date(), //Rally.util.DateTime.add(new Date(),'month',-12),
+            endDate = new Date(),
+            title = [];
+
+        _.each(data, function(d){
+            var sDt = d.PlannedStartDate || d.ActualStartDate || (d.Release && d.Release.ReleaseStartDate) || d.CreationDate || null;
+            if (sDt && sDt < startDate){
+               startDate = sDt;
+            }
+
+            var eDt = d.PlannedEndDate || d.ActualEndDate || d.TargetDate || null;
+            if (eDt && eDt > endDate){
+               endDate = eDt;
+            }
+
+            title.push(d.FormattedID);
+        });
+        title = title.join(', ');
+        //var startDate = portfolioItemData.PlannedStartDate || portfolioItemData.ActualStartDate || Rally.util.DateTime.add(new Date(),'month',-3);
+        //var endDate = portfolioItemData.PlannedEndDate || portfolioItemData.ActualEndDate || new Date();
 
         if (startDate >= endDate){
             this.logger.log('dates are wonky', startDate, endDate);
             startDate = Rally.util.DateTime.add(endDate,'month',-1);
         }
 
-        this.logger.log('dates',startDate, endDate);
-        this.removeAll();
+        this.startDate = startDate;
+        this.endDate = endDate;
 
-        this.add({
-          xtype: 'container',
-          items: [{
+        this.logger.log('dates',startDate, endDate, title);
+        this.clearDisplay();
 
-          xtype: 'portfolioburnup',
-          chartColors: this._getChartColors(),
-          chartConfig: {
-              title: {
-                text: portfolioItemData.FormattedID
-              },
-              yAxis: [{
-                 title: {
-                    text: this.getUnit()
-                 }
-              }]
-          },
-          calculatorConfig: {
-               usePoints: this.getUnit() === 'Points',
-               completedScheduleStateNames: this.getCompletedStates(),
-               startDate: startDate,
-               endDate: endDate,
-               showDefects: this.getShowDefects(),
-               showStories: this.getShowStories()
-           },
-           storeConfig: this._getStoreConfig(portfolioItemData),
-         }]
-         });
+        this._fetchStoreConfig(data).then({
+           success: function(storeConfig){ this._addChart(storeConfig, title, this.startDate, this.endDate, this.getUsePoints()); },
+           failure: this._showErrorNotification,
+           scope: this
+        });
+
     },
-    getCompletedStates: function(){
-        return ['Accepted'];
+    getFetureTypePath: function(){
+       return this.featureTypePath;
     },
-    _getStoreConfig: function(portfolioItemData){
+    _fetchStoreConfig: function(data){
+        var deferred = Ext.create('Deft.Deferred'),
+            isMilestone = data.length > 0 && data[0]._type.toLowerCase() == "milestone";
 
-        this.logger.log('_getStoreConfig', portfolioItemData);
+        this.logger.log('_getStoreConfig', data);
 
         var typeHierarchy = [];
         if (this.getShowStories()){
             typeHierarchy.push('HierarchicalRequirement');
         }
-        if (this.getShowDefects()){
+        if (this.getShowDefects() && !isMilestone){
             typeHierarchy.push('Defect');
         }
         if (typeHierarchy.length === 0){
@@ -90,20 +152,117 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
             find: {
                 _TypeHierarchy: {$in: typeHierarchy},
                 Children: null,
-                _ItemHierarchy: portfolioItemData.ObjectID
+                _ItemHierarchy: {$in: [0] }
             },
             fetch: ['ScheduleState', 'PlanEstimate','_id','_TypeHierarchy','FormattedID'],
             hydrate: ['ScheduleState','_TypeHierarchy'],
             removeUnauthorizedSnapshots: true,
+            useHttpPost: true,
             sort: {
                 _ValidFrom: 1
             },
           //  context: this.getContext().getDataContext(),
             limit: Infinity
         };
-        return configs;
+
+
+        if (data.length == 0){
+           deferred.resolve(configs);
+        } else {
+            if (!isMilestone){
+                configs.find._ItemHierarchy["$in"] = _.map(data, function(d){ return d.ObjectID; });
+                deferred.resolve(configs);
+            } else {
+              var filters = _.map(data, function(d){
+                  return {
+                     property: 'Milestones.ObjectID',
+                     value: d.ObjectID
+                  };
+              });
+              if (filters.length > 1){
+                 filters = Rally.data.wsapi.Filter.or(filters);
+              }
+
+              // Ext.create('Rally.data.wsapi.artifact.Store', {
+              //    models: ['PortfolioItem/Feature','Defect', 'UserStory'],
+              /* Customer only wants user stories assocaited with features */
+              Ext.create('Rally.data.wsapi.Store',{
+                 model: this.getFeatureTypePath(),
+                 filters: filters,
+                 fetch: ['ObjectID','ActualStartDate','PlannedStartDate'],
+                 limit: Infinity,
+                 pageSize: 1000,
+                 context: {
+                    project: null
+                 }
+             }).load({
+                callback: function(records,operation){
+
+                   if (operation.wasSuccessful()){
+                      configs.find._ItemHierarchy["$in"] = _.map(records, function(d){ return d.get('ObjectID'); });
+
+                      var startDate = new Date(),
+                          endDate = new Date(2000,01,01);
+
+                      _.each(records, function(r){
+                          var dt = r.get('ActualStartDate') || r.get('PlannedStartDate');
+                          if (dt < startDate){
+                             startDate = dt;
+                          }
+
+                          var edt = r.get('ActualEndDate') || r.get('PlannedEndDate');
+                          if (edt > endDate){
+                             endDate = edt;
+                          }
+                      });
+
+                      this.startDate = startDate;
+                      this.endDate = endDate;
+
+                      deferred.resolve(configs);
+                   } else {
+                      deferred.reject("Error loading milestone artifacts: " + operation && operation.error && operation.error.errors.join(','));
+                   }
+                }
+             });
+            }
+        }
+        return deferred.promise;
     },
-    _getChartColors: function(){
+    _addChart: function(storeConfig, title, startDate, endDate, usePoints){
+
+              this.down('#displayBox').add({
+                xtype: 'container',
+                items: [{
+
+                xtype: 'portfolioburnup',
+                chartColors: this._getChartColors(),
+                chartConfig: {
+                    title: {
+                      text: title
+                    },
+                    yAxis: [{
+                       title: {
+                          text: this.getUnit()
+                       }
+                    }]
+                },
+                calculatorConfig: {
+                     usePoints: usePoints,
+                     completedScheduleStateNames: this.getCompletedStates(),
+                     startDate: startDate,
+                     endDate: endDate,
+                     showDefects: this.getShowDefects(),
+                     showStories: this.getShowStories()
+                 },
+                 storeConfig: storeConfig,
+               }]
+               });
+    },
+    getCompletedStates: function(){
+        return ['Accepted'];
+    },
+      _getChartColors: function(){
       //In order to keep the colors consistent for the different options,
       //we need to build the colors according to the settings
       var chartColors = [],
@@ -171,6 +330,51 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
 
     isExternal: function(){
         return typeof(this.getAppId()) == 'undefined';
+    },
+    fetchFeatureType: function(){
+        var deferred = Ext.create('Deft.Deferred');
+
+        var store = Ext.create('Rally.data.wsapi.Store', {
+            model: 'TypeDefinition',
+            fetch: ['TypePath', 'Ordinal','Name'],
+            filters: [
+                {
+                    property: 'Parent.Name',
+                    operator: '=',
+                    value: 'Portfolio Item'
+                },
+                {
+                    property: 'Creatable',
+                    operator: '=',
+                    value: 'true'
+                },{
+                  property: 'Ordinal',
+                  value: 0
+                }
+            ],
+            sorters: [{
+                property: 'Ordinal',
+                direction: 'ASC'
+            }]
+        });
+        store.load({
+            callback: function(records, operation, success){
+
+                if (success && records.length > 0){
+                    this.featureTypePath = records[0].get('TypePath');
+                    deferred.resolve(records[0].get('TypePath'));
+                } else {
+                    var error_msg = '';
+                    if (operation && operation.error && operation.error.errors){
+                        error_msg = operation.error.errors.join(',');
+                    } else {
+                        error_msg = "No Portfolio Item Types found."
+                    }
+                    deferred.reject('Error loading Portfolio Item Types:  ' + error_msg);
+                }
+            }
+        });
+        return deferred.promise;
     }
 
 });
