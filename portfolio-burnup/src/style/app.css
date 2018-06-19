@@ -35,3 +35,26 @@
     font-family:NotoSans;
     font-style: italic;
 }
+
+.ctlLabel {
+   font-family: ProximaNovaBold;
+   font-size: 11px;
+   text-transform: uppercase;
+   text-align: right;
+   font-weight: bold;
+   float: right;
+}
+
+.error-text {
+   color: #EE1C25;
+   font-family: ProximaNova, helvetica, sans-serif;
+   font-size: 12px;
+   text-align: center;
+}
+
+.non-error-text {
+  font-family: ProximaNova, helvetica, sans-serif;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}

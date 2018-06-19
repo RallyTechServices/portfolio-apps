@@ -4,7 +4,13 @@
 
 ## Summary/Description
 
-![screenshot](./images/screenshot.png "This is an example")
+![screenshot](./images/portfolio-selection.png "portfolio-selection")
+
+This app is designed to be used in concert with https://github.com/RallyTechServices/portfolio-apps/portfolio-burnup to show the burnup for the selected items.
+
+This app lists Milestones or any type of portfolio item (configured in the App Settings).  
+
+To view the burnup for items, select the items of interest and "Show Burnup..." from the bulk menu.  The selected items will be shown in the portfolio-burnup chart on the same dashboard.  Please see the https://github.com/RallyTechServices/portfolio-apps/portfolio-burnup/README.md for details on the behavior of the burnup chart.  
 
 ## Development Notes
 
