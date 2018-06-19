@@ -2,7 +2,7 @@
 
 ## Summary/Description
 
-![screenshot](./images/burnup.png "portfolio-burnup")
+![screenshot](/images/burnup.png "portfolio-burnup")
 
 This app is designed to be used in concert with the Selection Grid app here:
 https://github.com/RallyTechServices/portfolio-apps/portfolio-selection-grid_box
