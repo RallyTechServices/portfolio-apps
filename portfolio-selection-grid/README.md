@@ -4,7 +4,7 @@
 
 ## Summary/Description
 
-![screenshot](./images/portfolio-selection.png "portfolio-selection")
+![screenshot](/images/portfolio-selection.png "portfolio-selection")
 
 This app is designed to be used in concert with https://github.com/RallyTechServices/portfolio-apps/portfolio-burnup to show the burnup for the selected items.
 

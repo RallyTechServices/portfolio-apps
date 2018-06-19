@@ -14,8 +14,8 @@ Series of apps built to respond to a single portfolio item picker on a dashboard
 #### Portfolio Item Kanban Board [(more...)](/portfolio-kanban/README.md)
 ![ScreenShot](/images/portfolio-item-kanban.png)
 
-#### Portfolio Item Selector Grid App (Alternative)
- *** IN PROGRESS ***
+#### Portfolio Item and Milestone Selector Grid App (Alternative)
+![ScreenShot](/images/portfolio-selection.png)
 
 #### Portfolio Item Burn up
-  *** IN PROGRESS ***
+![ScreenShot](/images/burnup.png)
