@@ -25,6 +25,9 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
     clearDisplay: function(){
        this.down('#displayBox') && this.down('#displayBox').removeAll();
     },
+    getFeatureTypePath: function(){
+       return this.featureTypePath;
+    },
     _initializeApp: function(){
         var cb = this.add({
             xtype: 'rallycombobox',
@@ -76,11 +79,10 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
       });
     },
     getUsePoints: function(){
-        return this.down('#chartUnit') && this.down('#chartUnit').getValue() == "points" || true;
+        return this.down('#chartUnit') && this.down('#chartUnit').getValue() == "points";
     },
     _updateChartUnits: function(cb){
-        var usePoints = this.getUsePoints();
-        this.logger.log('_updateChartUnits', usePoints);
+        this._addChart();
     },
     _onSelect: function(data){
         this.logger.log('_onSelect',data);
@@ -89,18 +91,20 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
             return;
         }
 
-        var startDate = new Date(), //Rally.util.DateTime.add(new Date(),'month',-12),
-            endDate = new Date(),
+        var startDate = null, //Rally.util.DateTime.add(new Date(),'month',-12),
+            endDate = null,
             title = [];
 
         _.each(data, function(d){
-            var sDt = d.PlannedStartDate || d.ActualStartDate || (d.Release && d.Release.ReleaseStartDate) || d.CreationDate || null;
-            if (sDt && sDt < startDate){
+            var sDt = d.PlannedStartDate || d.ActualStartDate || (d.Release && d.Release.ReleaseStartDate) || null;
+          //  console.log('sd',d.PlannedStartDate , d.ActualStartDate , (d.Release && d.Release.ReleaseStartDate))
+            if (!startDate || sDt < startDate){
                startDate = sDt;
             }
 
-            var eDt = d.PlannedEndDate || d.ActualEndDate || d.TargetDate || null;
-            if (eDt && eDt > endDate){
+            var eDt = d.PlannedEndDate || d.ActualEndDate || (d.Release && d.Release.ReleaseDate) || d.TargetDate || null;
+            //console.log('ed',d.PlannedEndDate , d.ActualEndDate , (d.Release && d.Release.ReleaseDate))
+            if (!endDate || eDt > endDate){
                endDate = eDt;
             }
 
@@ -109,6 +113,13 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
         title = title.join(', ');
         //var startDate = portfolioItemData.PlannedStartDate || portfolioItemData.ActualStartDate || Rally.util.DateTime.add(new Date(),'month',-3);
         //var endDate = portfolioItemData.PlannedEndDate || portfolioItemData.ActualEndDate || new Date();
+        if (!endDate){
+            endDate = new Date();
+        }
+
+        if (!startDate){
+          startDate = Rally.util.DateTime.add(endDate, 'year',-1);
+        }
 
         if (startDate >= endDate){
             this.logger.log('dates are wonky', startDate, endDate);
@@ -117,12 +128,13 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
 
         this.startDate = startDate;
         this.endDate = endDate;
+        this.title = title;
 
         this.logger.log('dates',startDate, endDate, title);
         this.clearDisplay();
 
         this._fetchStoreConfig(data).then({
-           success: function(storeConfig){ this._addChart(storeConfig, title, this.startDate, this.endDate, this.getUsePoints()); },
+           success: this._addChart,
            failure: this._showErrorNotification,
            scope: this
         });
@@ -135,7 +147,7 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
         var deferred = Ext.create('Deft.Deferred'),
             isMilestone = data.length > 0 && data[0]._type.toLowerCase() == "milestone";
 
-        this.logger.log('_getStoreConfig', data);
+        this.logger.log('_getStoreConfig', data, isMilestone);
 
         var typeHierarchy = [];
         if (this.getShowStories()){
@@ -165,12 +177,13 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
             limit: Infinity
         };
 
-
+        this.logger.log('data.length', data.length);
         if (data.length == 0){
            deferred.resolve(configs);
         } else {
             if (!isMilestone){
                 configs.find._ItemHierarchy["$in"] = _.map(data, function(d){ return d.ObjectID; });
+                this.storeConfig = configs;
                 deferred.resolve(configs);
             } else {
               var filters = _.map(data, function(d){
@@ -179,17 +192,19 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                      value: d.ObjectID
                   };
               });
+
+              this.logger.log('filters', filters,this.getFeatureTypePath());
               if (filters.length > 1){
                  filters = Rally.data.wsapi.Filter.or(filters);
               }
-
+              this.logger.log('filters', filters, this.getFeatureTypePath())
               // Ext.create('Rally.data.wsapi.artifact.Store', {
               //    models: ['PortfolioItem/Feature','Defect', 'UserStory'],
               /* Customer only wants user stories assocaited with features */
               Ext.create('Rally.data.wsapi.Store',{
                  model: this.getFeatureTypePath(),
                  filters: filters,
-                 fetch: ['ObjectID','ActualStartDate','PlannedStartDate'],
+                 fetch: ['ObjectID','ActualStartDate','PlannedStartDate','Release','ReleaseDate','ReleaseStartDate'],
                  limit: Infinity,
                  pageSize: 1000,
                  context: {
@@ -201,17 +216,17 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                    if (operation.wasSuccessful()){
                       configs.find._ItemHierarchy["$in"] = _.map(records, function(d){ return d.get('ObjectID'); });
 
-                      var startDate = new Date(),
-                          endDate = new Date(2000,01,01);
+                      var startDate = null,
+                          endDate = this.endDate || null;
 
                       _.each(records, function(r){
-                          var dt = r.get('ActualStartDate') || r.get('PlannedStartDate');
-                          if (dt < startDate){
+                          var dt = r.get('ActualStartDate') || r.get('PlannedStartDate') || (r.get('Release') && r.get('Release').ReleaseStartDate);
+                          if (!startDate || dt < startDate){
                              startDate = dt;
                           }
 
-                          var edt = r.get('ActualEndDate') || r.get('PlannedEndDate');
-                          if (edt > endDate){
+                          var edt = r.get('ActualEndDate') || r.get('PlannedEndDate') || (r.get('Release') && r.get('Release').ReleaseDate);;
+                          if (!endDate || edt > endDate){
                              endDate = edt;
                           }
                       });
@@ -219,18 +234,27 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                       this.startDate = startDate;
                       this.endDate = endDate;
 
+                      if (this.endDate < this.startDate){
+                          this.endDate = new Date();
+                      }
+
+                      this.storeConfig = configs;
                       deferred.resolve(configs);
                    } else {
                       deferred.reject("Error loading milestone artifacts: " + operation && operation.error && operation.error.errors.join(','));
                    }
-                }
+                },
+                scope: this
              });
             }
         }
         return deferred.promise;
     },
     _addChart: function(storeConfig, title, startDate, endDate, usePoints){
-
+             usePoints = this.getUsePoints();
+             title = this.title;
+             this.logger.log('_addChart', this.storeConfig, this.title, this.startDate, this.endDate, usePoints);
+             this.down('#displayBox').removeAll();
               this.down('#displayBox').add({
                 xtype: 'container',
                 items: [{
@@ -243,19 +267,19 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                     },
                     yAxis: [{
                        title: {
-                          text: this.getUnit()
+                          text: usePoints ? "Points" : "Work Item Count"
                        }
                     }]
                 },
                 calculatorConfig: {
                      usePoints: usePoints,
                      completedScheduleStateNames: this.getCompletedStates(),
-                     startDate: startDate,
-                     endDate: endDate,
+                     startDate: this.startDate,
+                     endDate: this.endDate,
                      showDefects: this.getShowDefects(),
                      showStories: this.getShowStories()
                  },
-                 storeConfig: storeConfig,
+                 storeConfig: this.storeConfig,
                }]
                });
     },
@@ -372,7 +396,8 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                     }
                     deferred.reject('Error loading Portfolio Item Types:  ' + error_msg);
                 }
-            }
+            },
+            scope: this
         });
         return deferred.promise;
     }

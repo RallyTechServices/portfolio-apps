@@ -22,7 +22,8 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioSelection", {
         Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
             models: [this._getArtifactType()],
             autoLoad: true,
-            enableHierarchy: true
+            enableHierarchy: true,
+            fetch: this._getFetchFields()
         }).then({
             scope: this,
             success: function(store) {
@@ -35,7 +36,7 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioSelection", {
                           ptype: 'rallygridboardinlinefiltercontrol',
                           inlineFilterButtonConfig: {
                               stateful: true,
-                              stateId: this.getContext().getScopedStateId(this._getArtifactType().replace('/','').toLowerCase() + '-filters'),
+                              stateId: this.getContext().getScopedStateId(this._getArtifactType().replace('/','').toLowerCase() + '--filters'),
                               modelNames: modelNames,
                               inlineFilterPanelConfig: {
                                   quickFilterPanelConfig: {
@@ -48,7 +49,7 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioSelection", {
                           headerPosition: 'left',
                           modelNames: modelNames,
                           stateful: true,
-                          stateId: this.getContext().getScopedStateId(this._getArtifactType().replace('/','').toLowerCase() + '-grid-columns')
+                          stateId: this.getContext().getScopedStateId(this._getArtifactType().replace('/','').toLowerCase() + '--columns')
                       }],
                       gridConfig: {
                         bulkEditConfig: {
@@ -99,6 +100,23 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioSelection", {
     },
     _getModelNames: function(){
         return [this._getArtifactType()];
+    },
+    _getFetchFields: function(){
+      if (this._getArtifactType() == "Milestone"){
+          return [
+              'Name',
+              'TargetDate'
+          ];
+      }
+       return [
+           'PlannedEndDate',
+           'PlannedStartDate',
+           'ActualStartDate',
+           'ActualEndDate',
+           'Release',
+           'ReleaseDate',
+           'ReleaseStartDate'
+       ];
     },
     getOptions: function() {
         var options = [

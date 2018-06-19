@@ -4,7 +4,7 @@
 
 ## Summary/Description
 
-![screenshot](./images/screenshot.png "This is an example")
+![screenshot](./images/burnup.png "portfolio-burnup")
 
 ## Development Notes
 

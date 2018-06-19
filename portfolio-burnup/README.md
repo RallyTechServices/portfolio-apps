@@ -1,10 +1,26 @@
 # Portfolio Burn up
 
-*** THIS APP IS IN PROGRESS June 2018 ***
-
 ## Summary/Description
 
 ![screenshot](./images/screenshot.png "This is an example")
+
+This app is designed to be used in concert with the Selection Grid app here:
+https://github.com/RallyTechServices/portfolio-apps/portfolio-selection-grid_box
+
+This app will show a burnup of story points or story count for one to many Portfolio Items or Milestones (depending on the configuration of the selection grid).
+
+Note that for the milestone configuration, this app will only show burnup for user stories associated with Features  (or lowest level portfolio item) directly associated with Milestones.  Any user stories directly associated with the Milestone will be ignored.  
+
+For the milestone configuration, this app looks at the burnup for only Features directly associated with the milestone currently.  This does not show the burnup for features previously added and removed from the Milestone.  
+
+The start and end dates are determined as follows:
+* For Portfolio Items (in order of precedence):
+   * *Start Date:* Planned Start Date or Actual Start Date or Release Start Date or End Date - 1 year
+   * *End Date:* Actual End Date or Planned End Date or Release Date or Now.
+
+* For Milestones (in order of precedence):
+  * *Start Date:* Planned Start Date or Actual Start Date or Release Start Date for features in milestone
+  * *End Date:* Target Date or Actual End Date or Planned End Date or Release Date
 
 ## Development Notes
 
