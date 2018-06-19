@@ -17,5 +17,5 @@ Series of apps built to respond to a single portfolio item picker on a dashboard
 #### Portfolio Item and Milestone Selector Grid App (Alternative)
 ![ScreenShot](/images/portfolio-selection.png)
 
-#### Portfolio Item Burn up
+#### Portfolio Item and Milestone Burn up
 ![ScreenShot](/images/burnup.png)
