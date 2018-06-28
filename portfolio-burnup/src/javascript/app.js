@@ -90,6 +90,7 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
             this._showEmptyMessage();
             return;
         }
+          this.setLoading(true);
 
         var startDate = null, //Rally.util.DateTime.add(new Date(),'month',-12),
             endDate = null,
@@ -133,11 +134,12 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
         this.logger.log('dates',startDate, endDate, title);
         this.clearDisplay();
 
+
         this._fetchStoreConfig(data).then({
            success: this._addChart,
            failure: this._showErrorNotification,
            scope: this
-        });
+        }).always(function(){ this.setLoading(false); },this);
 
     },
     getFetureTypePath: function(){
@@ -217,17 +219,25 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                       configs.find._ItemHierarchy["$in"] = _.map(records, function(d){ return d.get('ObjectID'); });
 
                       var startDate = null,
-                          endDate = this.endDate || null;
+                          endDate = this.endDate || null,
+                          startDateSource = null,
+                          emd;
 
                       _.each(records, function(r){
                           var dt = r.get('ActualStartDate') || r.get('PlannedStartDate') || (r.get('Release') && r.get('Release').ReleaseStartDate);
                           if (!startDate || dt < startDate){
                              startDate = dt;
+                             if (dt == (r.get('Release') && r.get('Release').ReleaseStartDate)){ startDateSource = Ext.String.format("Release Start Date ({0})",r.get('FormattedID'));  }
+                             if (dt == r.get('PlannedStartDate')){ startDateSource = Ext.String.format("Planned Start Date ({0})",r.get('FormattedID'));  }
+                             if (dt == r.get('ActualStartDate')){ startDateSource = Ext.String.format("Actual Start Date ({0})",r.get('FormattedID'));  }
                           }
 
                           var edt = r.get('ActualEndDate') || r.get('PlannedEndDate') || (r.get('Release') && r.get('Release').ReleaseDate);;
                           if (!endDate || edt > endDate){
                              endDate = edt;
+                             if (edt == (r.get('Release') && r.get('Release').ReleaseDate)){ endDateSource = Ext.String.format("Release Date ({0})",r.get('FormattedID'));  }
+                             if (edt == r.get('PlannedEndDate')){ endDateSource = Ext.String.format("Planned End Date ({0})",r.get('FormattedID'));  }
+                             if (edt == r.get('ActualEndDate')){ endDateSource = Ext.String.format("Actual End Date ({0})",r.get('FormattedID'));  }
                           }
                       });
 
@@ -237,6 +247,8 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                       if (this.endDate < this.startDate){
                           this.endDate = new Date();
                       }
+                      this.startDateSource = startDateSource;
+                      this.endDateSource = endDateSource;
 
                       this.storeConfig = configs;
                       deferred.resolve(configs);
@@ -254,6 +266,7 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
              usePoints = this.getUsePoints();
              title = this.title;
              this.logger.log('_addChart', this.storeConfig, this.title, this.startDate, this.endDate, usePoints);
+             this.setLoading(true);
              this.down('#displayBox').removeAll();
               this.down('#displayBox').add({
                 xtype: 'container',

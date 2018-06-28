@@ -3,7 +3,7 @@ Ext.define('CArABU.apps.portfolio-apps.PortfolioBurnupChart',{
     alias: 'widget.portfolioburnup',
     config: {
       storeType: 'Rally.data.lookback.SnapshotStore',
-
+      loadMask: true, 
       calculatorType: 'CArABU.apps.portfolio-apps.PortfolioBurnupCalculator',
 
        chartConfig: {

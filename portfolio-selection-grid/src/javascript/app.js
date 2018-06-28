@@ -23,7 +23,8 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioSelection", {
             models: [this._getArtifactType()],
             autoLoad: true,
             enableHierarchy: true,
-            fetch: this._getFetchFields()
+            fetch: this._getFetchFields(),
+            sorters: [{property: 'Name', direction: 'ASC'}]
         }).then({
             scope: this,
             success: function(store) {
@@ -40,8 +41,18 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioSelection", {
                               modelNames: modelNames,
                               inlineFilterPanelConfig: {
                                   quickFilterPanelConfig: {
-                                      defaultFields: this._getDefaultFields()
-                                  }
+                                      defaultFields: this._getDefaultFields(),
+                                      addQuickFilterConfig: {
+                                          whiteListFields: this._getWhitelistFields()
+                                      }
+                                  },
+                                  advancedFilterPanelConfig: {
+                                    advancedFilterRowsConfig: {
+                                        propertyFieldConfig: {
+                                            whiteListFields: this._getWhitelistFields()
+                                        }
+                                    }
+                                }
                               }
                           }
                       },{
@@ -52,19 +63,78 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioSelection", {
                           stateId: this.getContext().getScopedStateId(this._getArtifactType().replace('/','').toLowerCase() + '--columns')
                       }],
                       gridConfig: {
+                        listeners: {
+                            beforestaterestore: function(grid, state){
+                                var fields = grid.getModels()[0].getFields();
+                                var validFields = _.reduce(fields, function(arr, f){
+                                  if (f.attributeDefinition && f.attributeDefinition._refObjectUUID){
+                                      arr.push(f.attributeDefinition._refObjectUUID);
+                                  }
+                                  return arr;
+                                },[]);
+
+                                if (state.sorters && state.sorters.length > 0){
+                                   var removeSorters = false;
+
+                                    _.each(state.sorters, function(s, i){
+                                        if (!_.contains(validFields, s.property)){
+                                            removeSorters = true;
+                                            return false;
+                                        }
+                                    });
+                                    if (removeSorters){
+                                      state.sorters = [{
+                                       property: 'Name',
+                                       value: 'ASC'
+                                      }]
+                                    }
+                                }
+                                if (state.columns && state.columns.length > 0){
+                                    var removeColumns = false;
+                                    _.each(state.columns, function(c,i){
+                                        if (!_.contains(validFields, c.dataIndex)){
+                                           removeColumns = true;
+                                           return false;
+                                        }
+                                    });
+                                    if (removeColumns){
+                                        state.columns = this._getColumnCfgs();
+                                    }
+                                }
+                            },
+                            scope: this
+                        },
+                        // applyState: function(state) {
+                        //     if (state) {
+                        //         console.log('state',state);
+                        //         Ext.apply(this, state);
+                        //     }
+                        // },
                         bulkEditConfig: {
                           items: [{
                               xtype: 'showburnupbulkrecordmenuitem'
                           }]
                         },
                           store: store,
-                          columnCfgs: this._getColumnCfgs()
+                          columnCfgs: this._getColumnCfgs(),
+                          storeConfig: {
+                             sorters: [{
+                                property: 'Name',
+                                direction: 'ASC'
+                             }]
+                          }
                       },
                       height: this.getHeight()
                   });
               }
         });
 
+    },
+    _getWhitelistFields: function(){
+        if (this._getArtifactType() == "Milestone"){
+          return ['Tags'];
+        }
+        return ['Milestones', 'Tags'];
     },
     _getDefaultFields: function(){
       if (this._getArtifactType() == "Milestone"){
