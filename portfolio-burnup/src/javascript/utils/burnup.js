@@ -3,7 +3,6 @@ Ext.define('CArABU.apps.portfolio-apps.PortfolioBurnupChart',{
     alias: 'widget.portfolioburnup',
     config: {
       storeType: 'Rally.data.lookback.SnapshotStore',
-      loadMask: true, 
       calculatorType: 'CArABU.apps.portfolio-apps.PortfolioBurnupCalculator',
 
        chartConfig: {
@@ -28,7 +27,7 @@ Ext.define('CArABU.apps.portfolio-apps.PortfolioBurnupChart',{
                   style: {
                       color: '#444',
                       fontFamily:'ProximaNova',
-                      textTransform: 'uppercase',
+                  //    textTransform: 'uppercase',
                       fill:'#444'
                   }
               },
@@ -116,11 +115,9 @@ Ext.define('CArABU.apps.portfolio-apps.PortfolioBurnupChart',{
             }
         }
     },
-
     constructor: function(config) {
          this.mergeConfig(config);
+         //this.chartConfig.xAxis.title.text = Ext.String.format('Date ({0})',this.xAxisSubtitle);
          this.callParent(arguments);
      }
-
-
 });
