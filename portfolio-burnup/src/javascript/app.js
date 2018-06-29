@@ -94,53 +94,17 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
         }
           this.setLoading(true);
 
-        var startDate = null, //Rally.util.DateTime.add(new Date(),'month',-12),
-            endDate = null,
-            title = [];
-
         this.modelType = data[0]._type;
+
         this.logger.log('modelType', this.modelType);
-        _.each(data, function(d){
-            var sDt = d.PlannedStartDate || d.ActualStartDate || (d.Release && d.Release.ReleaseStartDate) || null;
-          //  console.log('sd',d.PlannedStartDate , d.ActualStartDate , (d.Release && d.Release.ReleaseStartDate))
-            if (!startDate || sDt < startDate){
-               startDate = sDt;
-            }
 
-            var eDt = d.PlannedEndDate || d.ActualEndDate || (d.Release && d.Release.ReleaseDate) || d.TargetDate || null;
-            //console.log('ed',d.PlannedEndDate , d.ActualEndDate , (d.Release && d.Release.ReleaseDate))
-            if (!endDate || eDt > endDate){
-               endDate = eDt;
-               if (eDt == d.TargetDate){
-                  this.endDateSource = Ext.String.format("{0} TargetDate",d.FormattedID);
-               }
-            }
+        this._setBoundaryDates(data);
 
-            title.push(d.FormattedID);
-        }, this);
+        var title = _.pluck(data,'FormattedID');
         title = title.join(', ');
-        //var startDate = portfolioItemData.PlannedStartDate || portfolioItemData.ActualStartDate || Rally.util.DateTime.add(new Date(),'month',-3);
-        //var endDate = portfolioItemData.PlannedEndDate || portfolioItemData.ActualEndDate || new Date();
-        if (!endDate){
-            endDate = new Date();
-        }
-
-        if (!startDate){
-          startDate = Rally.util.DateTime.add(endDate, 'year',-1);
-        }
-
-        if (startDate >= endDate){
-            this.logger.log('dates are wonky', startDate, endDate);
-            startDate = Rally.util.DateTime.add(endDate,'month',-1);
-        }
-
-        this.startDate = startDate;
-        this.endDate = endDate;
         this.title = title;
-
-        this.logger.log('dates',startDate, endDate, title);
+    
         this.clearDisplay();
-
 
         this._fetchStoreConfig(data).then({
            success: this._addChart,
@@ -221,43 +185,13 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                  }
              }).load({
                 callback: function(records,operation){
-
+                   this.logger.log('callback', operation);
                    if (operation.wasSuccessful()){
                       configs.find._ItemHierarchy["$in"] = _.map(records, function(d){ return d.get('ObjectID'); });
 
                       this.milestoneTeamData = this._buildMilestoneTeamData(records);
 
-                      var startDate = null,
-                          endDate = this.endDate || null,
-                          startDateSource = null,
-                          endDateSource = this.endDateSource || null;
-
-                      _.each(records, function(r){
-                          var dt = r.get('ActualStartDate') || r.get('PlannedStartDate') || (r.get('Release') && r.get('Release').ReleaseStartDate);
-                          if (!startDate || dt < startDate){
-                             startDate = dt;
-                             if (dt == (r.get('Release') && r.get('Release').ReleaseStartDate)){ startDateSource = Ext.String.format("{0} ReleaseStartDate",r.get('FormattedID'));  }
-                             if (dt == r.get('PlannedStartDate')){ startDateSource = Ext.String.format("{0} PlannedStartDate",r.get('FormattedID'));  }
-                             if (dt == r.get('ActualStartDate')){ startDateSource = Ext.String.format("{0} ActualStartDate",r.get('FormattedID'));  }
-                          }
-
-                          var edt = r.get('ActualEndDate') || r.get('PlannedEndDate') || (r.get('Release') && r.get('Release').ReleaseDate);;
-                          if (!endDate || edt > endDate){
-                             endDate = edt;
-                             if (edt == (r.get('Release') && r.get('Release').ReleaseDate)){ endDateSource = Ext.String.format("{0} Release Date",r.get('FormattedID'));  }
-                             if (edt == r.get('PlannedEndDate')){ endDateSource = Ext.String.format("{0} PlannedEndDate",r.get('FormattedID'));  }
-                             if (edt == r.get('ActualEndDate')){ endDateSource = Ext.String.format("{0} ActualEndDate",r.get('FormattedID'));  }
-                          }
-                      });
-
-                      this.startDate = startDate;
-                      this.endDate = endDate;
-
-                      if (this.endDate < this.startDate){
-                          this.endDate = new Date();
-                      }
-                      this.startDateSource = startDateSource;
-                      this.endDateSource = endDateSource || ' today';
+                      this._setBoundaryDates(records);
 
                       this.storeConfig = configs;
                       deferred.resolve(configs);
@@ -271,6 +205,48 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
         }
         return deferred.promise;
     },
+    _setBoundaryDates: function(records){
+        var startDate = null,
+            endDate = this.endDate || null,
+            startDateSource = null,
+            endDateSource = this.endDateSource || null;
+
+      this.logger.log('_setBoundaryDates', records);
+
+      _.each(records, function(r){
+          var data = r.getData && r.getData() || r;
+          if (data._type == "milestone"){
+             var edt = data.TargetDate;
+             if (edt && (!endDate || edt > endDate)){
+                endDate = edt;
+                endDateSource = Ext.String.format("{0} TargetDate",data.FormattedID);
+             }
+          } else {
+            var dt = data.ActualStartDate || data.PlannedStartDate || data.Release && data.Release.ReleaseStartDate || null;
+            if (dt && (!startDate || dt < startDate)){
+               startDate = dt;
+               if (dt == (data.Release && data.Release.ReleaseStartDate)){ startDateSource = Ext.String.format("{0} ReleaseStartDate",data.FormattedID);  }
+               if (dt == data.PlannedStartDate){ startDateSource = Ext.String.format("{0} PlannedStartDate",data.FormattedID);  }
+               if (dt == data.ActualStartDate){ startDateSource = Ext.String.format("{0} ActualStartDate",data.FormattedID);  }
+            }
+
+            var edt = data.ActualEndDate || data.PlannedEndDate || (data.Release && data.Release.ReleaseDate) ;
+            if (edt && (!endDate || edt > endDate)){
+               endDate = edt;
+               if (edt == (data.Release && data.ReleaseDate)){ endDateSource = Ext.String.format("{0} Release Date",data.FormattedID);  }
+               if (edt == data.PlannedEndDate){ endDateSource = Ext.String.format("{0} PlannedEndDate",data.FormattedID);  }
+               if (edt == data.ActualEndDate){ endDateSource = Ext.String.format("{0} ActualEndDate",data.FormattedID);  }
+            }
+          }
+
+      });
+
+      this.startDate = startDate;
+      this.endDate = endDate;
+      this.startDateSource = startDateSource;
+      this.endDateSource = endDateSource;
+      this.logger.log('_setBoundaryDates', this.startDate, this.endDate, this.startDateSource,this.endDateSource);
+      },
     _buildMilestoneTeamData: function(records){
         var hashByTeam = _.reduce(records, function(hsh, r){
             console.log('r',r.get('Project').Name, r.get('FormattedID'));
@@ -294,7 +270,6 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
     },
     _addChart: function(storeConfig, title, startDate, endDate, usePoints){
              usePoints = this.getUsePoints();
-             var xAxisSubtitle = Ext.String.format("{0} through {1}",this.startDateSource, this.endDateSource);
              title = this.title;
              this.logger.log('_addChart', this.storeConfig, this.title, this.startDate, this.endDate, usePoints);
               this.setLoading(true);
@@ -314,15 +289,15 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                     }],
                     xAxis: {
                        title: {
-                          text: Ext.String.format('DATE [{0}]',xAxisSubtitle)
+                          text: Ext.String.format('DATE [{0}]',this.getXAxisSubtitle())
                        }
                     }
                 },
                 calculatorConfig: {
                      usePoints: usePoints,
                      completedScheduleStateNames: this.getCompletedStates(),
-                     startDate: this.startDate,
-                     endDate: this.endDate,
+                     startDate: this.getStartDate(),
+                     endDate: this.getEndDate(),
                      showDefects: this.getShowDefects(),
                      showStories: this.getShowStories()
                  },
@@ -344,6 +319,30 @@ Ext.define("CArABU.app.portfolio-apps.PortfolioBurnup", {
                 xtype: 'container',
                 items: items
                });
+    },
+    getXAxisSubtitle: function(){
+      if (!this.endDateSource){ this.getEndDate(); }
+      if (!this.startDateSource) {this.getStartDate(); }
+
+      return Ext.String.format("{0} through {1}",this.startDateSource, this.endDateSource);
+    },
+    getEndDate: function(){
+       if (this.endDate){
+          return this.endDate;
+       }
+
+       this.endDateSource = "today";
+       return new Date();
+    },
+    getStartDate: function(){
+
+        if (this.startDate){
+           return this.startDate;
+        }
+
+        this.startDateSource = '1 year prior';
+        return Rally.util.DateTime.add(this.getEndDate(), 'year', -1);
+
     },
     isMilestones: function(){
        return this.modelType.toLowerCase() == 'milestone';

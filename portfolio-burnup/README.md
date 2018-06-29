@@ -15,11 +15,11 @@ For the milestone configuration, this app looks at the burnup for only Features 
 
 The start and end dates are determined as follows:
 * For Portfolio Items (in order of precedence):
-   * *Start Date:* Planned Start Date or Actual Start Date or Release Start Date or End Date - 1 year
+   * *Start Date:* Actual Start Date or Planned Start Date or Release Start Date or End Date - 1 year
    * *End Date:* Actual End Date or Planned End Date or Release Date or Now.
 
 * For Milestones (in order of precedence):
-  * *Start Date:* Planned Start Date or Actual Start Date or Release Start Date for features in milestone
+  * *Start Date:* Actual Start Date or Planned Start Date or Release Start Date for features in milestone
   * *End Date:* Target Date or Actual End Date or Planned End Date or Release Date
 
 ## Development Notes
